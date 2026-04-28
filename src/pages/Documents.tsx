@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText } from "lucide-react";
 import { xof, dateFr, docTotals, uid } from "@/lib/format";
+import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceDoc, InvoiceLine, DocKind, InvoiceStatus } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -150,6 +151,8 @@ export default function DocumentsPage({ kind }: Props) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(d)}><Pencil className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => printInvoice(d, party)}><Printer className="h-4 w-4 mr-2" /> Imprimer (A4)</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => printTicket(d, party)}><ReceiptText className="h-4 w-4 mr-2" /> Ticket (80mm)</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {statusOptions.map((st) => (
                             <DropdownMenuItem key={st} onClick={() => setDocStatus(d.id, st)} disabled={d.status === st}>
