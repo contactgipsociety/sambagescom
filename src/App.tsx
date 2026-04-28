@@ -9,6 +9,7 @@ import PartiesPage from "./pages/Parties";
 import ProductsPage from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import DocumentsPage from "./pages/Documents";
+import POS from "./pages/POS";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/devis" element={<DocumentsPage kind="devis" />} />
             <Route path="/ventes" element={<DocumentsPage kind="facture" />} />
             <Route path="/achats" element={<DocumentsPage kind="achat" />} />
+            <Route path="/pos" element={<POS />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

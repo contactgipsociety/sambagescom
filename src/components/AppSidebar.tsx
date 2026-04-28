@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ const main = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
 ];
 const operations = [
+  { title: "Caisse / POS", url: "/pos", icon: ScanLine },
   { title: "Ventes", url: "/ventes", icon: Receipt },
   { title: "Achats", url: "/achats", icon: ShoppingCart },
   { title: "Devis", url: "/devis", icon: FileText },

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag } from "lucide-react";
 import { xof } from "@/lib/format";
+import { generateSku } from "@/lib/sku";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -40,20 +41,25 @@ export default function ProductsPage() {
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const name = String(f.get("name") || "").trim();
+    const category = String(f.get("category") || "").trim() || undefined;
+    let sku = String(f.get("sku") || "").trim();
+    if (!sku) sku = generateSku(s.products, name, category);
     const data = {
       id: editing?.id,
-      sku: String(f.get("sku") || "").trim(),
-      name: String(f.get("name") || "").trim(),
-      category: String(f.get("category") || "").trim() || undefined,
+      sku,
+      name,
+      category,
       description: String(f.get("description") || "").trim(),
       costHT: Number(f.get("costHT") || 0),
+      // SKU est désormais facultatif côté UI (auto-généré si vide)
       priceHT: Number(f.get("priceHT") || 0),
       tvaRate: Number(f.get("tvaRate") || 18),
       stock: Number(f.get("stock") || 0),
       stockAlert: Number(f.get("stockAlert") || 0),
       unit: String(f.get("unit") || "u").trim(),
     };
-    if (!data.name || !data.sku) return toast.error("Nom et SKU requis");
+    if (!data.name) return toast.error("Le nom est requis");
     upsertProduct(data);
     toast.success(editing ? "Produit modifié" : "Produit ajouté");
     setOpen(false);
@@ -163,8 +169,8 @@ export default function ProductsPage() {
                 <Input id="name" name="name" defaultValue={editing?.name} required />
               </div>
               <div>
-                <Label htmlFor="sku">SKU *</Label>
-                <Input id="sku" name="sku" defaultValue={editing?.sku} required />
+                <Label htmlFor="sku">SKU</Label>
+                <Input id="sku" name="sku" defaultValue={editing?.sku} placeholder="Auto" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
