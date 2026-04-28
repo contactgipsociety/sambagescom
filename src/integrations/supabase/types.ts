@@ -14,7 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          created_at: string
+          date: string
+          due_date: string | null
+          id: string
+          kind: string
+          lines: Json
+          notes: string | null
+          number: string
+          party_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          due_date?: string | null
+          id?: string
+          kind: string
+          lines?: Json
+          notes?: string | null
+          number: string
+          party_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          due_date?: string | null
+          id?: string
+          kind?: string
+          lines?: Json
+          notes?: string | null
+          number?: string
+          party_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          ninea: string | null
+          notes: string | null
+          phone: string | null
+          type: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          ninea?: string | null
+          notes?: string | null
+          phone?: string | null
+          type: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          ninea?: string | null
+          notes?: string | null
+          phone?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          cost_ht: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          price_ht: number
+          sku: string
+          stock: number
+          stock_alert: number
+          tva_rate: number
+          unit: string
+        }
+        Insert: {
+          category?: string | null
+          cost_ht?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          price_ht?: number
+          sku: string
+          stock?: number
+          stock_alert?: number
+          tva_rate?: number
+          unit?: string
+        }
+        Update: {
+          category?: string | null
+          cost_ht?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price_ht?: number
+          sku?: string
+          stock?: number
+          stock_alert?: number
+          tva_rate?: number
+          unit?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
