@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, FileText, Building2, Receipt } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,16 +16,17 @@ import {
 const main = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
 ];
-const ventes = [
+const operations = [
+  { title: "Ventes", url: "/ventes", icon: Receipt },
+  { title: "Achats", url: "/achats", icon: ShoppingCart },
   { title: "Devis", url: "/devis", icon: FileText },
-  { title: "Factures", url: "/factures", icon: Receipt },
 ];
 const repertoire = [
   { title: "Clients", url: "/clients", icon: Users },
   { title: "Fournisseurs", url: "/fournisseurs", icon: Building2 },
 ];
 const catalogue = [
-  { title: "Produits & Stock", url: "/produits", icon: Package },
+  { title: "Inventaire", url: "/inventaire", icon: Package },
 ];
 
 export function AppSidebar() {
@@ -66,14 +67,14 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="text-sidebar-foreground font-semibold text-sm">Gescom</span>
-              <span className="text-sidebar-foreground/50 text-[11px]">Gestion commerciale</span>
+              <span className="text-sidebar-foreground/50 text-[11px]">Sénégal · FCFA</span>
             </div>
           )}
         </div>
       </SidebarHeader>
       <SidebarContent>
         {renderGroup("Pilotage", main)}
-        {renderGroup("Ventes", ventes)}
+        {renderGroup("Opérations", operations)}
         {renderGroup("Répertoire", repertoire)}
         {renderGroup("Catalogue", catalogue)}
       </SidebarContent>
