@@ -1,149 +1,241 @@
-import { useEffect, useState } from "react";
-import type { AppState, Party, Product, InvoiceDoc, DocKind } from "./types";
-import { uid } from "./format";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { AppState, Party, Product, InvoiceDoc, DocKind, InvoiceStatus } from "./types";
 
-const KEY = "gescom_state_v3";
-
-const seed = (): AppState => ({
-  parties: [
-    { id: uid(), type: "client", name: "Boutique Teranga", email: "contact@teranga.sn", phone: "+221 77 123 45 67", address: "Av. Bourguiba, Dakar", ninea: "0042315 2A 2", createdAt: new Date().toISOString() },
-    { id: uid(), type: "client", name: "Auberge Saly", email: "saly@example.sn", phone: "+221 76 555 11 22", address: "Saly Portudal, Mbour", createdAt: new Date().toISOString() },
-    { id: uid(), type: "fournisseur", name: "Grossiste Sandaga", email: "ventes@sandaga.sn", phone: "+221 78 999 00 11", address: "Marché Sandaga, Dakar", createdAt: new Date().toISOString() },
-  ],
-  products: [
-    { id: uid(), sku: "ART-001", name: "Sac de riz parfumé 25kg", category: "Céréales", costHT: 12000, priceHT: 15500, tvaRate: 18, stock: 40, stockAlert: 10, unit: "sac", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-002", name: "Bidon d'huile 20L", category: "Huiles & Condiments", costHT: 18000, priceHT: 22000, tvaRate: 18, stock: 15, stockAlert: 8, unit: "bidon", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-003", name: "Carton de sucre 50kg", category: "Épicerie", costHT: 24000, priceHT: 29500, tvaRate: 18, stock: 6, stockAlert: 10, unit: "carton", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-004", name: "Pack eau minérale 1.5L x6", category: "Boissons", costHT: 2200, priceHT: 3000, tvaRate: 18, stock: 80, stockAlert: 20, unit: "pack", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-005", name: "Savon de Marseille 200g", category: "Hygiène", costHT: 350, priceHT: 600, tvaRate: 18, stock: 200, stockAlert: 50, unit: "u", createdAt: new Date().toISOString() },
-  ],
-  documents: [],
+// ========= Mappers DB <-> App =========
+const mapPartyRow = (r: any): Party => ({
+  id: r.id,
+  type: r.type,
+  name: r.name,
+  email: r.email ?? undefined,
+  phone: r.phone ?? undefined,
+  address: r.address ?? undefined,
+  ninea: r.ninea ?? undefined,
+  notes: r.notes ?? undefined,
+  createdAt: r.created_at,
 });
 
-const load = (): AppState => {
+const mapProductRow = (r: any): Product => ({
+  id: r.id,
+  sku: r.sku,
+  name: r.name,
+  description: r.description ?? undefined,
+  category: r.category ?? undefined,
+  costHT: Number(r.cost_ht),
+  priceHT: Number(r.price_ht),
+  tvaRate: Number(r.tva_rate),
+  stock: Number(r.stock),
+  stockAlert: Number(r.stock_alert),
+  unit: r.unit,
+  createdAt: r.created_at,
+});
+
+const mapDocRow = (r: any): InvoiceDoc => ({
+  id: r.id,
+  kind: r.kind,
+  number: r.number,
+  partyId: r.party_id ?? "",
+  date: r.date,
+  dueDate: r.due_date ?? undefined,
+  lines: Array.isArray(r.lines) ? r.lines : [],
+  status: r.status,
+  notes: r.notes ?? undefined,
+  createdAt: r.created_at,
+});
+
+// ========= State global en mémoire =========
+let memory: AppState = { parties: [], products: [], documents: [] };
+let loaded = false;
+let loading = false;
+const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
+
+const fetchAll = async () => {
+  if (loading) return;
+  loading = true;
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) {
-      const s = seed();
-      localStorage.setItem(KEY, JSON.stringify(s));
-      return s;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return seed();
+    const [p, prod, doc] = await Promise.all([
+      supabase.from("parties").select("*").order("created_at", { ascending: false }),
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
+      supabase.from("documents").select("*").order("created_at", { ascending: false }),
+    ]);
+    memory = {
+      parties: (p.data ?? []).map(mapPartyRow),
+      products: (prod.data ?? []).map(mapProductRow),
+      documents: (doc.data ?? []).map(mapDocRow),
+    };
+    loaded = true;
+    notify();
+  } finally {
+    loading = false;
   }
 };
 
-let memory: AppState | null = null;
-const listeners = new Set<() => void>();
-
-const getState = () => {
-  if (!memory) memory = load();
-  return memory;
+// Init + abonnement realtime
+const ensureLoaded = () => {
+  if (!loaded && !loading) fetchAll();
 };
 
-const setState = (updater: (s: AppState) => AppState) => {
-  memory = updater(getState());
-  localStorage.setItem(KEY, JSON.stringify(memory));
-  listeners.forEach((l) => l());
-};
+if (typeof window !== "undefined") {
+  ensureLoaded();
+  supabase
+    .channel("gescom-sync")
+    .on("postgres_changes", { event: "*", schema: "public", table: "parties" }, () => fetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => fetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => fetchAll())
+    .subscribe();
+}
 
 export const useStore = () => {
   const [, force] = useState(0);
   useEffect(() => {
+    ensureLoaded();
     const fn = () => force((n) => n + 1);
     listeners.add(fn);
     return () => { listeners.delete(fn); };
   }, []);
-  return getState();
+  return memory;
 };
 
-// Parties
-export const upsertParty = (p: Omit<Party, "id" | "createdAt"> & { id?: string }) =>
-  setState((s) => {
-    if (p.id) return { ...s, parties: s.parties.map((x) => (x.id === p.id ? { ...x, ...p } as Party : x)) };
-    return { ...s, parties: [{ ...p, id: uid(), createdAt: new Date().toISOString() } as Party, ...s.parties] };
-  });
+export const useStoreLoaded = () => {
+  const [v, setV] = useState(loaded);
+  useEffect(() => {
+    const fn = () => setV(loaded);
+    listeners.add(fn);
+    if (loaded) setV(true);
+    return () => { listeners.delete(fn); };
+  }, []);
+  return v;
+};
 
-export const deleteParty = (id: string) =>
-  setState((s) => ({ ...s, parties: s.parties.filter((p) => p.id !== id) }));
+// ========= Parties =========
+export const upsertParty = async (p: Omit<Party, "id" | "createdAt"> & { id?: string }) => {
+  const row = {
+    type: p.type, name: p.name,
+    email: p.email || null, phone: p.phone || null,
+    address: p.address || null, ninea: p.ninea || null, notes: p.notes || null,
+  };
+  if (p.id) {
+    await supabase.from("parties").update(row).eq("id", p.id);
+  } else {
+    await supabase.from("parties").insert(row);
+  }
+  await fetchAll();
+};
 
-// Products
-export const upsertProduct = (p: Omit<Product, "id" | "createdAt"> & { id?: string }) =>
-  setState((s) => {
-    if (p.id) return { ...s, products: s.products.map((x) => (x.id === p.id ? { ...x, ...p } as Product : x)) };
-    return { ...s, products: [{ ...p, id: uid(), createdAt: new Date().toISOString() } as Product, ...s.products] };
-  });
+export const deleteParty = async (id: string) => {
+  await supabase.from("parties").delete().eq("id", id);
+  await fetchAll();
+};
 
-export const deleteProduct = (id: string) =>
-  setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
+// ========= Products =========
+export const upsertProduct = async (p: Omit<Product, "id" | "createdAt"> & { id?: string }) => {
+  const row = {
+    sku: p.sku, name: p.name,
+    description: p.description || null,
+    category: p.category || null,
+    cost_ht: p.costHT, price_ht: p.priceHT,
+    tva_rate: p.tvaRate, stock: p.stock,
+    stock_alert: p.stockAlert, unit: p.unit,
+  };
+  if (p.id) {
+    await supabase.from("products").update(row).eq("id", p.id);
+  } else {
+    await supabase.from("products").insert(row);
+  }
+  await fetchAll();
+};
 
-export const adjustStock = (productId: string, delta: number) =>
-  setState((s) => ({
-    ...s,
-    products: s.products.map((p) => (p.id === productId ? { ...p, stock: Math.max(0, p.stock + delta) } : p)),
-  }));
+export const deleteProduct = async (id: string) => {
+  await supabase.from("products").delete().eq("id", id);
+  await fetchAll();
+};
 
-// Documents
+const adjustStockDB = async (productId: string, delta: number) => {
+  const prod = memory.products.find((x) => x.id === productId);
+  if (!prod) return;
+  const next = Math.max(0, prod.stock + delta);
+  await supabase.from("products").update({ stock: next }).eq("id", productId);
+};
+
+// ========= Documents =========
 export const nextDocNumber = (kind: DocKind) => {
-  const s = getState();
   const prefix = kind === "devis" ? "DEV" : kind === "facture" ? "FAC" : "ACH";
   const year = new Date().getFullYear();
-  const count = s.documents.filter((d) => d.kind === kind && d.number.includes(`${year}`)).length + 1;
+  const count = memory.documents.filter((d) => d.kind === kind && d.number.includes(`${year}`)).length + 1;
   return `${prefix}-${year}-${String(count).padStart(4, "0")}`;
 };
 
-const applyStockMovement = (doc: InvoiceDoc, previous?: InvoiceDoc) => {
-  // Annule l'effet du précédent (si payée/envoyée comptait)
+const applyStockMovement = async (doc: InvoiceDoc, previous?: InvoiceDoc) => {
   const wasCounted = previous && previous.status !== "annulee" && previous.status !== "brouillon";
   const isCounted = doc.status !== "annulee" && doc.status !== "brouillon";
 
   if (previous && wasCounted) {
-    previous.lines.forEach((l) => {
-      if (!l.productId) return;
-      const sign = previous.kind === "achat" ? -1 : +1; // on annule : achat retirait, vente ajoutait
-      adjustStock(l.productId, sign * l.quantity);
-    });
+    for (const l of previous.lines) {
+      if (!l.productId) continue;
+      const sign = previous.kind === "achat" ? -1 : +1;
+      await adjustStockDB(l.productId, sign * l.quantity);
+    }
   }
   if (isCounted) {
-    doc.lines.forEach((l) => {
-      if (!l.productId) return;
+    for (const l of doc.lines) {
+      if (!l.productId) continue;
       const sign = doc.kind === "achat" ? +1 : -1;
-      adjustStock(l.productId, sign * l.quantity);
-    });
-  }
-};
-
-export const upsertDocument = (d: Omit<InvoiceDoc, "id" | "createdAt"> & { id?: string }) => {
-  const previous = d.id ? getState().documents.find((x) => x.id === d.id) : undefined;
-  let saved!: InvoiceDoc;
-  setState((s) => {
-    if (d.id) {
-      saved = { ...(previous as InvoiceDoc), ...d } as InvoiceDoc;
-      return { ...s, documents: s.documents.map((x) => (x.id === d.id ? saved : x)) };
+      await adjustStockDB(l.productId, sign * l.quantity);
     }
-    saved = { ...d, id: uid(), createdAt: new Date().toISOString() } as InvoiceDoc;
-    return { ...s, documents: [saved, ...s.documents] };
-  });
-  applyStockMovement(saved, previous);
-};
-
-export const deleteDocument = (id: string) => {
-  const previous = getState().documents.find((d) => d.id === id);
-  setState((s) => ({ ...s, documents: s.documents.filter((d) => d.id !== id) }));
-  if (previous && previous.status !== "annulee" && previous.status !== "brouillon") {
-    previous.lines.forEach((l) => {
-      if (!l.productId) return;
-      const sign = previous.kind === "achat" ? -1 : +1;
-      adjustStock(l.productId, sign * l.quantity);
-    });
   }
 };
 
-export const setDocStatus = (id: string, status: InvoiceDoc["status"]) => {
-  const previous = getState().documents.find((d) => d.id === id);
-  if (!previous) return;
-  const updated = { ...previous, status };
-  setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === id ? updated : d)) }));
-  applyStockMovement(updated, previous);
+export const upsertDocument = async (d: Omit<InvoiceDoc, "id" | "createdAt"> & { id?: string }) => {
+  const previous = d.id ? memory.documents.find((x) => x.id === d.id) : undefined;
+  const row = {
+    kind: d.kind, number: d.number,
+    party_id: d.partyId || null,
+    date: d.date, due_date: d.dueDate || null,
+    status: d.status, notes: d.notes || null,
+    lines: d.lines as any,
+  };
+
+  let savedId = d.id;
+  if (d.id) {
+    await supabase.from("documents").update(row).eq("id", d.id);
+  } else {
+    const { data } = await supabase.from("documents").insert(row).select("id").single();
+    savedId = data?.id;
+  }
+
+  const saved: InvoiceDoc = {
+    ...(previous ?? ({} as InvoiceDoc)),
+    ...d,
+    id: savedId!,
+    createdAt: previous?.createdAt ?? new Date().toISOString(),
+  } as InvoiceDoc;
+
+  await applyStockMovement(saved, previous);
+  await fetchAll();
 };
+
+export const deleteDocument = async (id: string) => {
+  const previous = memory.documents.find((d) => d.id === id);
+  await supabase.from("documents").delete().eq("id", id);
+  if (previous && previous.status !== "annulee" && previous.status !== "brouillon") {
+    for (const l of previous.lines) {
+      if (!l.productId) continue;
+      const sign = previous.kind === "achat" ? -1 : +1;
+      await adjustStockDB(l.productId, sign * l.quantity);
+    }
+  }
+  await fetchAll();
+};
+
+export const setDocStatus = async (id: string, status: InvoiceStatus) => {
+  const previous = memory.documents.find((d) => d.id === id);
+  if (!previous) return;
+  await supabase.from("documents").update({ status }).eq("id", id);
+  const updated = { ...previous, status };
+  await applyStockMovement(updated, previous);
+  await fetchAll();
+};
+
+// Compat (non utilisé directement)
+export const adjustStock = adjustStockDB;
