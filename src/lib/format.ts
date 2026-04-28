@@ -1,5 +1,8 @@
-export const eur = (n: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n || 0);
+export const xof = (n: number) =>
+  new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(Math.round(n || 0)) + " FCFA";
+
+// alias pour compat
+export const eur = xof;
 
 export const dateFr = (d: string) =>
   new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });

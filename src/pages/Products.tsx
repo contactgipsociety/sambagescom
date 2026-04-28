@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, Package, AlertTriangle } from "lucide-react";
-import { eur } from "@/lib/format";
+import { xof } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -21,6 +21,9 @@ export default function ProductsPage() {
     p.name.toLowerCase().includes(q.toLowerCase()) || p.sku.toLowerCase().includes(q.toLowerCase())
   );
 
+  const valeurStock = list.reduce((sum, p) => sum + p.stock * p.costHT, 0);
+  const valeurVente = list.reduce((sum, p) => sum + p.stock * p.priceHT, 0);
+
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
 
@@ -32,8 +35,9 @@ export default function ProductsPage() {
       sku: String(f.get("sku") || "").trim(),
       name: String(f.get("name") || "").trim(),
       description: String(f.get("description") || "").trim(),
+      costHT: Number(f.get("costHT") || 0),
       priceHT: Number(f.get("priceHT") || 0),
-      tvaRate: Number(f.get("tvaRate") || 20),
+      tvaRate: Number(f.get("tvaRate") || 18),
       stock: Number(f.get("stock") || 0),
       stockAlert: Number(f.get("stockAlert") || 0),
       unit: String(f.get("unit") || "u").trim(),
@@ -51,11 +55,11 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <PageHeader
-        title="Produits & Stock"
-        subtitle={`${list.length} produit${list.length > 1 ? "s" : ""}`}
-        action={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouveau produit</Button>}
+        title="Inventaire"
+        subtitle={`${list.length} article${list.length > 1 ? "s" : ""} · Valeur stock : ${xof(valeurStock)} · Valeur vente : ${xof(valeurVente)}`}
+        action={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>}
       />
 
       <div className="mb-4 relative max-w-md">
@@ -67,18 +71,19 @@ export default function ProductsPage() {
         {list.length === 0 ? (
           <EmptyState
             icon={<Package className="h-5 w-5" />}
-            title="Aucun produit"
-            description="Créez votre premier produit ou service."
+            title="Aucun article"
+            description="Créez votre premier article."
             action={<Button onClick={openNew} size="sm" className="gap-2"><Plus className="h-4 w-4" /> Ajouter</Button>}
           />
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="text-left px-5 py-3 font-medium">Produit</th>
+                <th className="text-left px-5 py-3 font-medium">Article</th>
                 <th className="text-left px-5 py-3 font-medium hidden md:table-cell">SKU</th>
-                <th className="text-right px-5 py-3 font-medium">Prix HT</th>
-                <th className="text-right px-5 py-3 font-medium hidden sm:table-cell">TVA</th>
+                <th className="text-right px-5 py-3 font-medium hidden sm:table-cell">Achat</th>
+                <th className="text-right px-5 py-3 font-medium">Vente</th>
+                <th className="text-right px-5 py-3 font-medium hidden lg:table-cell">Marge</th>
                 <th className="text-right px-5 py-3 font-medium">Stock</th>
                 <th className="w-24"></th>
               </tr>
@@ -86,6 +91,8 @@ export default function ProductsPage() {
             <tbody className="divide-y divide-border">
               {list.map((p) => {
                 const low = p.stock <= p.stockAlert;
+                const margeUnit = p.priceHT - p.costHT;
+                const margePct = p.priceHT > 0 ? (margeUnit / p.priceHT) * 100 : 0;
                 return (
                   <tr key={p.id} className="hover:bg-muted/30">
                     <td className="px-5 py-3">
@@ -93,8 +100,13 @@ export default function ProductsPage() {
                       {p.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</div>}
                     </td>
                     <td className="px-5 py-3 text-muted-foreground hidden md:table-cell font-mono text-xs">{p.sku}</td>
-                    <td className="px-5 py-3 text-right font-medium">{eur(p.priceHT)}</td>
-                    <td className="px-5 py-3 text-right text-muted-foreground hidden sm:table-cell">{p.tvaRate}%</td>
+                    <td className="px-5 py-3 text-right text-muted-foreground hidden sm:table-cell">{xof(p.costHT)}</td>
+                    <td className="px-5 py-3 text-right font-medium">{xof(p.priceHT)}</td>
+                    <td className="px-5 py-3 text-right hidden lg:table-cell">
+                      <span className={margeUnit >= 0 ? "text-success" : "text-destructive"}>
+                        {xof(margeUnit)} <span className="text-xs text-muted-foreground">({margePct.toFixed(1)}%)</span>
+                      </span>
+                    </td>
                     <td className="px-5 py-3 text-right">
                       <span className={`inline-flex items-center gap-1 ${low ? "text-warning" : "text-foreground"}`}>
                         {low && <AlertTriangle className="h-3 w-3" />}
@@ -117,7 +129,7 @@ export default function ProductsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "Modifier le produit" : "Nouveau produit"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? "Modifier l'article" : "Nouvel article"}</DialogTitle></DialogHeader>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
@@ -135,25 +147,29 @@ export default function ProductsPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label htmlFor="priceHT">Prix HT (€)</Label>
-                <Input id="priceHT" name="priceHT" type="number" step="0.01" defaultValue={editing?.priceHT ?? 0} />
+                <Label htmlFor="costHT">Coût d'achat (FCFA)</Label>
+                <Input id="costHT" name="costHT" type="number" step="1" defaultValue={editing?.costHT ?? 0} />
+              </div>
+              <div>
+                <Label htmlFor="priceHT">Prix de vente (FCFA)</Label>
+                <Input id="priceHT" name="priceHT" type="number" step="1" defaultValue={editing?.priceHT ?? 0} />
               </div>
               <div>
                 <Label htmlFor="tvaRate">TVA (%)</Label>
-                <Input id="tvaRate" name="tvaRate" type="number" step="0.1" defaultValue={editing?.tvaRate ?? 20} />
+                <Input id="tvaRate" name="tvaRate" type="number" step="0.1" defaultValue={editing?.tvaRate ?? 18} />
               </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="unit">Unité</Label>
                 <Input id="unit" name="unit" defaultValue={editing?.unit ?? "u"} />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="stock">Stock</Label>
                 <Input id="stock" name="stock" type="number" defaultValue={editing?.stock ?? 0} />
               </div>
               <div>
-                <Label htmlFor="stockAlert">Seuil d'alerte</Label>
+                <Label htmlFor="stockAlert">Seuil alerte</Label>
                 <Input id="stockAlert" name="stockAlert" type="number" defaultValue={editing?.stockAlert ?? 0} />
               </div>
             </div>
