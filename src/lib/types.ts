@@ -7,7 +7,7 @@ export interface Party {
   email?: string;
   phone?: string;
   address?: string;
-  siret?: string;
+  ninea?: string; // équivalent SIRET au Sénégal
   notes?: string;
   createdAt: string;
 }
@@ -17,8 +17,9 @@ export interface Product {
   sku: string;
   name: string;
   description?: string;
-  priceHT: number;
-  tvaRate: number; // %
+  costHT: number;       // prix d'achat
+  priceHT: number;      // prix de vente
+  tvaRate: number;      // % (18 par défaut au Sénégal)
   stock: number;
   stockAlert: number;
   unit: string;
@@ -26,7 +27,7 @@ export interface Product {
 }
 
 export type InvoiceStatus = "brouillon" | "envoyee" | "payee" | "annulee";
-export type DocKind = "devis" | "facture";
+export type DocKind = "devis" | "facture" | "achat";
 
 export interface InvoiceLine {
   id: string;
@@ -41,7 +42,7 @@ export interface InvoiceDoc {
   id: string;
   kind: DocKind;
   number: string;
-  clientId: string;
+  partyId: string;     // client si vente, fournisseur si achat
   date: string;
   dueDate?: string;
   lines: InvoiceLine[];
