@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { AppState, Party, Product, InvoiceDoc, DocKind } from "./types";
 import { uid } from "./format";
 
-const KEY = "gescom_state_v2";
+const KEY = "gescom_state_v3";
 
 const seed = (): AppState => ({
   parties: [
@@ -11,9 +11,11 @@ const seed = (): AppState => ({
     { id: uid(), type: "fournisseur", name: "Grossiste Sandaga", email: "ventes@sandaga.sn", phone: "+221 78 999 00 11", address: "Marché Sandaga, Dakar", createdAt: new Date().toISOString() },
   ],
   products: [
-    { id: uid(), sku: "ART-001", name: "Sac de riz parfumé 25kg", costHT: 12000, priceHT: 15500, tvaRate: 18, stock: 40, stockAlert: 10, unit: "sac", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-002", name: "Bidon d'huile 20L", costHT: 18000, priceHT: 22000, tvaRate: 18, stock: 15, stockAlert: 8, unit: "bidon", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "ART-003", name: "Carton de sucre 50kg", costHT: 24000, priceHT: 29500, tvaRate: 18, stock: 6, stockAlert: 10, unit: "carton", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-001", name: "Sac de riz parfumé 25kg", category: "Céréales", costHT: 12000, priceHT: 15500, tvaRate: 18, stock: 40, stockAlert: 10, unit: "sac", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-002", name: "Bidon d'huile 20L", category: "Huiles & Condiments", costHT: 18000, priceHT: 22000, tvaRate: 18, stock: 15, stockAlert: 8, unit: "bidon", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-003", name: "Carton de sucre 50kg", category: "Épicerie", costHT: 24000, priceHT: 29500, tvaRate: 18, stock: 6, stockAlert: 10, unit: "carton", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-004", name: "Pack eau minérale 1.5L x6", category: "Boissons", costHT: 2200, priceHT: 3000, tvaRate: 18, stock: 80, stockAlert: 20, unit: "pack", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-005", name: "Savon de Marseille 200g", category: "Hygiène", costHT: 350, priceHT: 600, tvaRate: 18, stock: 200, stockAlert: 50, unit: "u", createdAt: new Date().toISOString() },
   ],
   documents: [],
 });

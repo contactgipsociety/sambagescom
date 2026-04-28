@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 220 20% 98%;
+    --background: 220 23% 97%;
     --foreground: 222 25% 12%;
 
     --card: 0 0% 100%;
@@ -13,8 +13,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 25% 12%;
 
-    --primary: 222 47% 16%;
-    --primary-foreground: 210 40% 98%;
+    /* Odoo signature aubergine */
+    --primary: 313 18% 37%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 313 25% 94%;
 
     --secondary: 220 14% 96%;
     --secondary-foreground: 222 25% 12%;
@@ -22,40 +24,42 @@
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 217 91% 60%;
+    /* Teal Odoo */
+    --accent: 183 98% 26%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 217 91% 96%;
+    --accent-soft: 183 50% 94%;
 
-    --success: 142 71% 38%;
+    --success: 152 60% 36%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 142 71% 95%;
+    --success-soft: 152 55% 94%;
 
-    --warning: 38 92% 50%;
+    --warning: 35 95% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-soft: 38 92% 95%;
+    --warning-soft: 35 95% 94%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 354 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 0 72% 96%;
+    --destructive-soft: 354 70% 96%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 313 18% 37%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    --shadow-sm: 0 1px 2px 0 hsl(222 25% 12% / 0.04);
-    --shadow-md: 0 4px 12px -2px hsl(222 25% 12% / 0.06), 0 2px 4px -2px hsl(222 25% 12% / 0.04);
-    --shadow-lg: 0 12px 32px -8px hsl(222 25% 12% / 0.10);
+    --shadow-sm: 0 1px 2px 0 hsl(222 25% 12% / 0.05);
+    --shadow-md: 0 4px 12px -2px hsl(222 25% 12% / 0.07), 0 2px 4px -2px hsl(222 25% 12% / 0.04);
+    --shadow-lg: 0 12px 32px -8px hsl(222 25% 12% / 0.12);
 
-    --sidebar-background: 222 30% 10%;
-    --sidebar-foreground: 220 14% 80%;
-    --sidebar-primary: 217 91% 60%;
+    /* Sidebar Odoo : claire avec accent aubergine */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 20% 25%;
+    --sidebar-primary: 313 18% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 25% 16%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 25% 16%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 313 25% 96%;
+    --sidebar-accent-foreground: 313 30% 30%;
+    --sidebar-border: 220 13% 92%;
+    --sidebar-ring: 313 18% 37%;
   }
 
   .dark {
@@ -65,32 +69,33 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 25% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+    --primary: 313 30% 65%;
     --primary-foreground: 222 47% 11%;
+    --primary-soft: 313 25% 18%;
     --secondary: 222 20% 16%;
     --secondary-foreground: 210 40% 98%;
     --muted: 222 20% 16%;
     --muted-foreground: 220 9% 60%;
-    --accent: 217 91% 60%;
+    --accent: 183 60% 45%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 217 50% 18%;
-    --success: 142 71% 45%;
+    --accent-soft: 183 40% 18%;
+    --success: 152 55% 45%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 142 50% 15%;
-    --warning: 38 92% 55%;
+    --success-soft: 152 45% 15%;
+    --warning: 35 95% 55%;
     --warning-foreground: 0 0% 100%;
-    --warning-soft: 38 50% 15%;
-    --destructive: 0 72% 55%;
+    --warning-soft: 35 50% 15%;
+    --destructive: 354 65% 55%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 0 50% 18%;
+    --destructive-soft: 354 50% 18%;
     --border: 222 20% 18%;
     --input: 222 20% 18%;
-    --ring: 217 91% 60%;
-    --sidebar-background: 222 30% 6%;
-    --sidebar-foreground: 220 14% 75%;
-    --sidebar-primary: 217 91% 60%;
+    --ring: 313 30% 65%;
+    --sidebar-background: 222 30% 9%;
+    --sidebar-foreground: 220 14% 80%;
+    --sidebar-primary: 313 30% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 25% 12%;
+    --sidebar-accent: 222 25% 14%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 222 25% 14%;
   }
@@ -111,6 +116,9 @@
 
 @layer components {
   .stat-card {
-    @apply bg-card border border-border rounded-xl p-5 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow;
+    @apply bg-card border border-border rounded-lg p-4 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:border-primary/20 transition-all;
+  }
+  .odoo-chip {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium;
   }
 }

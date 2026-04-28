@@ -17,6 +17,7 @@ export interface Product {
   sku: string;
   name: string;
   description?: string;
+  category?: string;    // catégorie produit
   costHT: number;       // prix d'achat
   priceHT: number;      // prix de vente
   tvaRate: number;      // % (18 par défaut au Sénégal)

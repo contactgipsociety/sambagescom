@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,8 @@ const repertoire = [
   { title: "Fournisseurs", url: "/fournisseurs", icon: Building2 },
 ];
 const catalogue = [
-  { title: "Inventaire", url: "/inventaire", icon: Package },
+  { title: "Catalogue", url: "/catalogue", icon: Tag },
+  { title: "Inventaire", url: "/inventaire", icon: Boxes },
 ];
 
 export function AppSidebar() {
@@ -37,7 +38,7 @@ export function AppSidebar() {
 
   const renderGroup = (label: string, items: typeof main) => (
     <SidebarGroup>
-      {!collapsed && <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/50">{label}</SidebarGroupLabel>}
+      {!collapsed && <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-semibold px-3">{label}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
@@ -45,11 +46,11 @@ export function AppSidebar() {
               <SidebarMenuButton
                 asChild
                 isActive={isActive(item.url)}
-                className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium"
+                className="data-[active=true]:bg-primary-soft data-[active=true]:text-primary data-[active=true]:font-semibold data-[active=true]:border-l-2 data-[active=true]:border-primary rounded-md"
               >
                 <NavLink to={item.url} className="flex items-center gap-3">
                   <item.icon className="h-[18px] w-[18px] shrink-0" />
-                  {!collapsed && <span>{item.title}</span>}
+                  {!collapsed && <span className="text-[13.5px]">{item.title}</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -60,23 +61,23 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-3">
-          <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center text-accent-foreground font-bold text-sm shrink-0">G</div>
+        <div className="flex items-center gap-2.5 px-2 py-3">
+          <div className="h-9 w-9 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-sm">G</div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sidebar-foreground font-semibold text-sm">Gescom</span>
-              <span className="text-sidebar-foreground/50 text-[11px]">Sénégal · FCFA</span>
+              <span className="text-foreground font-semibold text-[15px]">Gescom</span>
+              <span className="text-muted-foreground text-[11px]">Gestion commerciale · SN</span>
             </div>
           )}
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="bg-sidebar">
         {renderGroup("Pilotage", main)}
         {renderGroup("Opérations", operations)}
         {renderGroup("Répertoire", repertoire)}
-        {renderGroup("Catalogue", catalogue)}
+        {renderGroup("Stock", catalogue)}
       </SidebarContent>
     </Sidebar>
   );
