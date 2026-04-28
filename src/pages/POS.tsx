@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X, ImageIcon, CheckCircle2 } from "lucide-react";
 import { xof, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceLine, InvoiceDoc } from "@/lib/types";
@@ -74,7 +74,7 @@ export default function POS() {
 
   const change = paid - totals.ttc;
 
-  const checkout = async (mode: "ticket" | "invoice") => {
+  const checkout = async (mode: "validate" | "ticket" | "invoice") => {
     if (cart.length === 0) return toast.error("Panier vide");
     const usePartyId = partyId !== "__none" ? partyId : (clients[0]?.id ?? "");
     if (!usePartyId) return toast.error("Créez d'abord un client (au moins un)");
@@ -101,9 +101,11 @@ export default function POS() {
     });
 
     const party = s.parties.find((p) => p.id === usePartyId);
-    if (mode === "ticket") printTicket(doc, party); else printInvoice(doc, party);
+    if (mode === "ticket") printTicket(doc, party);
+    else if (mode === "invoice") printInvoice(doc, party);
+    else printInvoice(doc, party); // "validate" → facture auto
 
-    toast.success(`Vente ${number} encaissée`);
+    toast.success(`Vente ${number} validée — facture générée`);
     setCart([]);
     setPaid(0);
   };
@@ -137,11 +139,20 @@ export default function POS() {
                   key={p.id}
                   disabled={out}
                   onClick={() => addToCart(p.id)}
-                  className="text-left bg-card border border-border rounded-lg p-3 hover:border-primary hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-left bg-card border border-border rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col"
                 >
-                  <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{p.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Stock: {p.stock} {p.unit}</div>
-                  <div className="mt-2 font-semibold text-primary">{xof(p.priceHT)}</div>
+                  <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  <div className="p-2.5 flex-1 flex flex-col">
+                    <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{p.name}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Stock: {p.stock} {p.unit}</div>
+                    <div className="mt-1.5 font-semibold text-primary">{xof(p.priceHT)}</div>
+                  </div>
                 </button>
               );
             })}
@@ -212,9 +223,17 @@ export default function POS() {
               </div>
             </div>
 
+            <Button
+              onClick={() => checkout("validate")}
+              disabled={cart.length === 0}
+              className="w-full gap-2 h-11 text-base font-semibold bg-success hover:bg-success/90 text-success-foreground"
+            >
+              <CheckCircle2 className="h-5 w-5" /> Valider la vente
+            </Button>
+
             <div className="grid grid-cols-2 gap-2">
-              <Button onClick={() => checkout("ticket")} disabled={cart.length === 0} className="gap-1.5"><ReceiptText className="h-4 w-4" /> Ticket</Button>
-              <Button onClick={() => checkout("invoice")} disabled={cart.length === 0} variant="outline" className="gap-1.5"><Printer className="h-4 w-4" /> Facture</Button>
+              <Button onClick={() => checkout("ticket")} disabled={cart.length === 0} variant="outline" size="sm" className="gap-1.5"><ReceiptText className="h-4 w-4" /> Ticket</Button>
+              <Button onClick={() => checkout("invoice")} disabled={cart.length === 0} variant="outline" size="sm" className="gap-1.5"><Printer className="h-4 w-4" /> Facture</Button>
             </div>
           </div>
         </div>
