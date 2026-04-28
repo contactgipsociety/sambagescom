@@ -40,7 +40,7 @@ export default function PartiesPage({ type }: Props) {
       email: String(f.get("email") || "").trim(),
       phone: String(f.get("phone") || "").trim(),
       address: String(f.get("address") || "").trim(),
-      siret: String(f.get("siret") || "").trim(),
+      ninea: String(f.get("ninea") || "").trim(),
       notes: String(f.get("notes") || "").trim(),
     };
     if (!data.name) return toast.error("Le nom est requis");
@@ -95,7 +95,7 @@ export default function PartiesPage({ type }: Props) {
                 <tr key={p.id} className="hover:bg-muted/30">
                   <td className="px-5 py-3">
                     <div className="font-medium">{p.name}</div>
-                    {p.siret && <div className="text-xs text-muted-foreground mt-0.5">SIRET : {p.siret}</div>}
+                    {p.ninea && <div className="text-xs text-muted-foreground mt-0.5">NINEA : {p.ninea}</div>}
                   </td>
                   <td className="px-5 py-3 hidden md:table-cell text-muted-foreground">
                     {p.email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {p.email}</div>}
@@ -144,8 +144,8 @@ export default function PartiesPage({ type }: Props) {
               <Input id="address" name="address" defaultValue={editing?.address} />
             </div>
             <div>
-              <Label htmlFor="siret">SIRET</Label>
-              <Input id="siret" name="siret" defaultValue={editing?.siret} />
+              <Label htmlFor="ninea">NINEA</Label>
+              <Input id="ninea" name="ninea" defaultValue={editing?.ninea} />
             </div>
             <div>
               <Label htmlFor="notes">Notes</Label>
