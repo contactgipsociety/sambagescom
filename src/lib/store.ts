@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
-import type { AppState, Party, Product, InvoiceDoc } from "./types";
+import { useEffect, useState } from "react";
+import type { AppState, Party, Product, InvoiceDoc, DocKind } from "./types";
 import { uid } from "./format";
 
-const KEY = "gescom_state_v1";
+const KEY = "gescom_state_v2";
 
 const seed = (): AppState => ({
   parties: [
-    { id: uid(), type: "client", name: "Atelier Dupont", email: "contact@dupont.fr", phone: "01 23 45 67 89", address: "12 rue de Lyon, Paris", siret: "812 345 678 00012", createdAt: new Date().toISOString() },
-    { id: uid(), type: "client", name: "SARL Martin & Co", email: "hello@martin.co", phone: "02 11 22 33 44", address: "5 av. Foch, Nantes", createdAt: new Date().toISOString() },
-    { id: uid(), type: "fournisseur", name: "Distri Pro", email: "sales@distripro.com", phone: "03 88 99 00 11", address: "ZI Nord, Strasbourg", createdAt: new Date().toISOString() },
+    { id: uid(), type: "client", name: "Boutique Teranga", email: "contact@teranga.sn", phone: "+221 77 123 45 67", address: "Av. Bourguiba, Dakar", ninea: "0042315 2A 2", createdAt: new Date().toISOString() },
+    { id: uid(), type: "client", name: "Auberge Saly", email: "saly@example.sn", phone: "+221 76 555 11 22", address: "Saly Portudal, Mbour", createdAt: new Date().toISOString() },
+    { id: uid(), type: "fournisseur", name: "Grossiste Sandaga", email: "ventes@sandaga.sn", phone: "+221 78 999 00 11", address: "Marché Sandaga, Dakar", createdAt: new Date().toISOString() },
   ],
   products: [
-    { id: uid(), sku: "PRD-001", name: "Prestation de conseil", priceHT: 650, tvaRate: 20, stock: 999, stockAlert: 0, unit: "jour", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "PRD-002", name: "Licence logicielle annuelle", priceHT: 1200, tvaRate: 20, stock: 50, stockAlert: 10, unit: "u", createdAt: new Date().toISOString() },
-    { id: uid(), sku: "PRD-003", name: "Module formation", priceHT: 350, tvaRate: 20, stock: 8, stockAlert: 10, unit: "u", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-001", name: "Sac de riz parfumé 25kg", costHT: 12000, priceHT: 15500, tvaRate: 18, stock: 40, stockAlert: 10, unit: "sac", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-002", name: "Bidon d'huile 20L", costHT: 18000, priceHT: 22000, tvaRate: 18, stock: 15, stockAlert: 8, unit: "bidon", createdAt: new Date().toISOString() },
+    { id: uid(), sku: "ART-003", name: "Carton de sucre 50kg", costHT: 24000, priceHT: 29500, tvaRate: 18, stock: 6, stockAlert: 10, unit: "carton", createdAt: new Date().toISOString() },
   ],
   documents: [],
 });
@@ -76,25 +76,72 @@ export const upsertProduct = (p: Omit<Product, "id" | "createdAt"> & { id?: stri
 export const deleteProduct = (id: string) =>
   setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
 
+export const adjustStock = (productId: string, delta: number) =>
+  setState((s) => ({
+    ...s,
+    products: s.products.map((p) => (p.id === productId ? { ...p, stock: Math.max(0, p.stock + delta) } : p)),
+  }));
+
 // Documents
-export const nextDocNumber = (kind: "devis" | "facture") => {
+export const nextDocNumber = (kind: DocKind) => {
   const s = getState();
-  const prefix = kind === "devis" ? "DEV" : "FAC";
+  const prefix = kind === "devis" ? "DEV" : kind === "facture" ? "FAC" : "ACH";
   const year = new Date().getFullYear();
   const count = s.documents.filter((d) => d.kind === kind && d.number.includes(`${year}`)).length + 1;
   return `${prefix}-${year}-${String(count).padStart(4, "0")}`;
 };
 
-export const upsertDocument = (d: Omit<InvoiceDoc, "id" | "createdAt"> & { id?: string }) =>
+const applyStockMovement = (doc: InvoiceDoc, previous?: InvoiceDoc) => {
+  // Annule l'effet du précédent (si payée/envoyée comptait)
+  const wasCounted = previous && previous.status !== "annulee" && previous.status !== "brouillon";
+  const isCounted = doc.status !== "annulee" && doc.status !== "brouillon";
+
+  if (previous && wasCounted) {
+    previous.lines.forEach((l) => {
+      if (!l.productId) return;
+      const sign = previous.kind === "achat" ? -1 : +1; // on annule : achat retirait, vente ajoutait
+      adjustStock(l.productId, sign * l.quantity);
+    });
+  }
+  if (isCounted) {
+    doc.lines.forEach((l) => {
+      if (!l.productId) return;
+      const sign = doc.kind === "achat" ? +1 : -1;
+      adjustStock(l.productId, sign * l.quantity);
+    });
+  }
+};
+
+export const upsertDocument = (d: Omit<InvoiceDoc, "id" | "createdAt"> & { id?: string }) => {
+  const previous = d.id ? getState().documents.find((x) => x.id === d.id) : undefined;
+  let saved!: InvoiceDoc;
   setState((s) => {
-    if (d.id) return { ...s, documents: s.documents.map((x) => (x.id === d.id ? { ...x, ...d } as InvoiceDoc : x)) };
-    return { ...s, documents: [{ ...d, id: uid(), createdAt: new Date().toISOString() } as InvoiceDoc, ...s.documents] };
+    if (d.id) {
+      saved = { ...(previous as InvoiceDoc), ...d } as InvoiceDoc;
+      return { ...s, documents: s.documents.map((x) => (x.id === d.id ? saved : x)) };
+    }
+    saved = { ...d, id: uid(), createdAt: new Date().toISOString() } as InvoiceDoc;
+    return { ...s, documents: [saved, ...s.documents] };
   });
+  applyStockMovement(saved, previous);
+};
 
-export const deleteDocument = (id: string) =>
+export const deleteDocument = (id: string) => {
+  const previous = getState().documents.find((d) => d.id === id);
   setState((s) => ({ ...s, documents: s.documents.filter((d) => d.id !== id) }));
+  if (previous && previous.status !== "annulee" && previous.status !== "brouillon") {
+    previous.lines.forEach((l) => {
+      if (!l.productId) return;
+      const sign = previous.kind === "achat" ? -1 : +1;
+      adjustStock(l.productId, sign * l.quantity);
+    });
+  }
+};
 
-export const setDocStatus = (id: string, status: InvoiceDoc["status"]) =>
-  setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === id ? { ...d, status } : d)) }));
-
-export const useStoreActions = () => useCallback(() => ({}), []);
+export const setDocStatus = (id: string, status: InvoiceDoc["status"]) => {
+  const previous = getState().documents.find((d) => d.id === id);
+  if (!previous) return;
+  const updated = { ...previous, status };
+  setState((s) => ({ ...s, documents: s.documents.map((d) => (d.id === id ? updated : d)) }));
+  applyStockMovement(updated, previous);
+};
