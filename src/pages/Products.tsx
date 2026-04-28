@@ -57,8 +57,8 @@ export default function ProductsPage() {
   const valeurStock = list.reduce((sum, p) => sum + p.stock * p.costHT, 0);
   const valeurVente = list.reduce((sum, p) => sum + p.stock * p.priceHT, 0);
 
-  const openNew = () => { setEditing(null); setOpen(true); };
-  const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
+  const openNew = () => { setEditing(null); setImageUrl(undefined); setOpen(true); };
+  const openEdit = (p: Product) => { setEditing(p); setImageUrl(p.imageUrl); setOpen(true); };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,9 +72,9 @@ export default function ProductsPage() {
       sku,
       name,
       category,
+      imageUrl,
       description: String(f.get("description") || "").trim(),
       costHT: Number(f.get("costHT") || 0),
-      // SKU est désormais facultatif côté UI (auto-généré si vide)
       priceHT: Number(f.get("priceHT") || 0),
       tvaRate: Number(f.get("tvaRate") || 18),
       stock: Number(f.get("stock") || 0),
