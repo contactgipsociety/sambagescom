@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore, upsertProduct, deleteProduct } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag, Upload, ImageIcon, X } from "lucide-react";
 import { xof } from "@/lib/format";
 import { generateSku } from "@/lib/sku";
 import type { Product } from "@/lib/types";
