@@ -7,6 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import PartiesPage from "./pages/Parties";
 import ProductsPage from "./pages/Products";
+import Inventory from "./pages/Inventory";
 import DocumentsPage from "./pages/Documents";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -23,7 +24,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<PartiesPage type="client" />} />
             <Route path="/fournisseurs" element={<PartiesPage type="fournisseur" />} />
-            <Route path="/inventaire" element={<ProductsPage />} />
+            <Route path="/catalogue" element={<ProductsPage />} />
+            <Route path="/inventaire" element={<Inventory />} />
             <Route path="/devis" element={<DocumentsPage kind="devis" />} />
             <Route path="/ventes" element={<DocumentsPage kind="facture" />} />
             <Route path="/achats" element={<DocumentsPage kind="achat" />} />

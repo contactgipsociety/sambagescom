@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore, upsertProduct, deleteProduct } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, Package, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag } from "lucide-react";
 import { xof } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
@@ -14,12 +15,21 @@ import { toast } from "sonner";
 export default function ProductsPage() {
   const s = useStore();
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState<string>("__all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
 
-  const list = s.products.filter((p) =>
-    p.name.toLowerCase().includes(q.toLowerCase()) || p.sku.toLowerCase().includes(q.toLowerCase())
-  );
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    s.products.forEach((p) => p.category && set.add(p.category));
+    return Array.from(set).sort();
+  }, [s.products]);
+
+  const list = s.products.filter((p) => {
+    const matchQ = p.name.toLowerCase().includes(q.toLowerCase()) || p.sku.toLowerCase().includes(q.toLowerCase());
+    const matchC = cat === "__all" || (p.category ?? "") === cat;
+    return matchQ && matchC;
+  });
 
   const valeurStock = list.reduce((sum, p) => sum + p.stock * p.costHT, 0);
   const valeurVente = list.reduce((sum, p) => sum + p.stock * p.priceHT, 0);
@@ -34,6 +44,7 @@ export default function ProductsPage() {
       id: editing?.id,
       sku: String(f.get("sku") || "").trim(),
       name: String(f.get("name") || "").trim(),
+      category: String(f.get("category") || "").trim() || undefined,
       description: String(f.get("description") || "").trim(),
       costHT: Number(f.get("costHT") || 0),
       priceHT: Number(f.get("priceHT") || 0),
@@ -57,17 +68,26 @@ export default function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <PageHeader
-        title="Inventaire"
-        subtitle={`${list.length} article${list.length > 1 ? "s" : ""} · Valeur stock : ${xof(valeurStock)} · Valeur vente : ${xof(valeurVente)}`}
+        title="Catalogue produits"
+        subtitle={`${list.length} article${list.length > 1 ? "s" : ""} · Valeur stock ${xof(valeurStock)} · Valeur vente ${xof(valeurVente)}`}
         action={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>}
       />
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom ou SKU…" className="pl-9" />
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom ou SKU…" className="pl-9" />
+        </div>
+        <Select value={cat} onValueChange={setCat}>
+          <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Toutes les catégories</SelectItem>
+            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         {list.length === 0 ? (
           <EmptyState
             icon={<Package className="h-5 w-5" />}
@@ -77,14 +97,15 @@ export default function ProductsPage() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
               <tr>
-                <th className="text-left px-5 py-3 font-medium">Article</th>
-                <th className="text-left px-5 py-3 font-medium hidden md:table-cell">SKU</th>
-                <th className="text-right px-5 py-3 font-medium hidden sm:table-cell">Achat</th>
-                <th className="text-right px-5 py-3 font-medium">Vente</th>
-                <th className="text-right px-5 py-3 font-medium hidden lg:table-cell">Marge</th>
-                <th className="text-right px-5 py-3 font-medium">Stock</th>
+                <th className="text-left px-5 py-2.5 font-semibold">Article</th>
+                <th className="text-left px-5 py-2.5 font-semibold hidden md:table-cell">Catégorie</th>
+                <th className="text-left px-5 py-2.5 font-semibold hidden md:table-cell">SKU</th>
+                <th className="text-right px-5 py-2.5 font-semibold hidden sm:table-cell">Achat</th>
+                <th className="text-right px-5 py-2.5 font-semibold">Vente</th>
+                <th className="text-right px-5 py-2.5 font-semibold hidden lg:table-cell">Marge</th>
+                <th className="text-right px-5 py-2.5 font-semibold">Stock</th>
                 <th className="w-24"></th>
               </tr>
             </thead>
@@ -94,26 +115,31 @@ export default function ProductsPage() {
                 const margeUnit = p.priceHT - p.costHT;
                 const margePct = p.priceHT > 0 ? (margeUnit / p.priceHT) * 100 : 0;
                 return (
-                  <tr key={p.id} className="hover:bg-muted/30">
-                    <td className="px-5 py-3">
-                      <div className="font-medium">{p.name}</div>
+                  <tr key={p.id} className="hover:bg-primary-soft/30 transition-colors">
+                    <td className="px-5 py-2.5">
+                      <div className="font-medium text-foreground">{p.name}</div>
                       {p.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</div>}
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground hidden md:table-cell font-mono text-xs">{p.sku}</td>
-                    <td className="px-5 py-3 text-right text-muted-foreground hidden sm:table-cell">{xof(p.costHT)}</td>
-                    <td className="px-5 py-3 text-right font-medium">{xof(p.priceHT)}</td>
-                    <td className="px-5 py-3 text-right hidden lg:table-cell">
+                    <td className="px-5 py-2.5 hidden md:table-cell">
+                      {p.category ? (
+                        <span className="odoo-chip bg-accent-soft text-accent"><Tag className="h-3 w-3" />{p.category}</span>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
+                    <td className="px-5 py-2.5 text-muted-foreground hidden md:table-cell font-mono text-xs">{p.sku}</td>
+                    <td className="px-5 py-2.5 text-right text-muted-foreground hidden sm:table-cell">{xof(p.costHT)}</td>
+                    <td className="px-5 py-2.5 text-right font-medium">{xof(p.priceHT)}</td>
+                    <td className="px-5 py-2.5 text-right hidden lg:table-cell">
                       <span className={margeUnit >= 0 ? "text-success" : "text-destructive"}>
                         {xof(margeUnit)} <span className="text-xs text-muted-foreground">({margePct.toFixed(1)}%)</span>
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right">
-                      <span className={`inline-flex items-center gap-1 ${low ? "text-warning" : "text-foreground"}`}>
+                    <td className="px-5 py-2.5 text-right">
+                      <span className={`inline-flex items-center gap-1 ${low ? "text-warning font-semibold" : "text-foreground"}`}>
                         {low && <AlertTriangle className="h-3 w-3" />}
                         {p.stock} {p.unit}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-2.5">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(p)}><Trash2 className="h-4 w-4" /></Button>
@@ -141,17 +167,30 @@ export default function ProductsPage() {
                 <Input id="sku" name="sku" defaultValue={editing?.sku} required />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="category">Catégorie</Label>
+                <Input id="category" name="category" defaultValue={editing?.category} list="cat-list" placeholder="Ex: Boissons" />
+                <datalist id="cat-list">
+                  {categories.map((c) => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+              <div>
+                <Label htmlFor="unit">Unité</Label>
+                <Input id="unit" name="unit" defaultValue={editing?.unit ?? "u"} />
+              </div>
+            </div>
             <div>
               <Label htmlFor="description">Description</Label>
               <Input id="description" name="description" defaultValue={editing?.description} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label htmlFor="costHT">Coût d'achat (FCFA)</Label>
+                <Label htmlFor="costHT">Coût d'achat</Label>
                 <Input id="costHT" name="costHT" type="number" step="1" defaultValue={editing?.costHT ?? 0} />
               </div>
               <div>
-                <Label htmlFor="priceHT">Prix de vente (FCFA)</Label>
+                <Label htmlFor="priceHT">Prix de vente</Label>
                 <Input id="priceHT" name="priceHT" type="number" step="1" defaultValue={editing?.priceHT ?? 0} />
               </div>
               <div>
@@ -159,11 +198,7 @@ export default function ProductsPage() {
                 <Input id="tvaRate" name="tvaRate" type="number" step="0.1" defaultValue={editing?.tvaRate ?? 18} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label htmlFor="unit">Unité</Label>
-                <Input id="unit" name="unit" defaultValue={editing?.unit ?? "u"} />
-              </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="stock">Stock</Label>
                 <Input id="stock" name="stock" type="number" defaultValue={editing?.stock ?? 0} />
