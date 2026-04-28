@@ -145,8 +145,19 @@ export default function ProductsPage() {
                 return (
                   <tr key={p.id} className="hover:bg-primary-soft/30 transition-colors">
                     <td className="px-5 py-2.5">
-                      <div className="font-medium text-foreground">{p.name}</div>
-                      {p.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</div>}
+                      <div className="flex items-center gap-3">
+                        {p.imageUrl ? (
+                          <img src={p.imageUrl} alt={p.name} className="h-10 w-10 rounded-md object-cover border border-border flex-shrink-0" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium text-foreground truncate">{p.name}</div>
+                          {p.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</div>}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-5 py-2.5 hidden md:table-cell">
                       {p.category ? (
@@ -184,7 +195,30 @@ export default function ProductsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "Modifier l'article" : "Nouvel article"}</DialogTitle></DialogHeader>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            <div className="flex items-center gap-3">
+              {imageUrl ? (
+                <div className="relative">
+                  <img src={imageUrl} alt="aperçu" className="h-20 w-20 rounded-md object-cover border border-border" />
+                  <button type="button" onClick={() => setImageUrl(undefined)} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-20 w-20 rounded-md border-2 border-dashed border-border flex items-center justify-center bg-muted/30">
+                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1">
+                <Label htmlFor="image">Photo du produit</Label>
+                <div className="mt-1">
+                  <input id="image" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                  <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => document.getElementById("image")?.click()} className="gap-2">
+                    <Upload className="h-3.5 w-3.5" /> {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <Label htmlFor="name">Nom *</Label>
