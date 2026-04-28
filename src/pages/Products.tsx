@@ -20,6 +20,27 @@ export default function ProductsPage() {
   const [cat, setCat] = useState<string>("__all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error("Image trop lourde (max 5 Mo)");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      setImageUrl(data.publicUrl);
+      toast.success("Image téléversée");
+    } catch (e: any) {
+      toast.error(e.message || "Échec de l'upload");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const categories = useMemo(() => {
     const set = new Set<string>();
