@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { AppState, Party, Product, InvoiceDoc, DocKind, InvoiceStatus } from "./types";
+import type { AppState, Party, Product, InvoiceDoc, DocKind, InvoiceStatus, AccountingEntry } from "./types";
 
 // ========= Mappers DB <-> App =========
 const mapPartyRow = (r: any): Party => ({
@@ -44,8 +44,20 @@ const mapDocRow = (r: any): InvoiceDoc => ({
   createdAt: r.created_at,
 });
 
+const mapEntryRow = (r: any): AccountingEntry => ({
+  id: r.id,
+  date: r.date,
+  label: r.label,
+  accountCode: r.account_code,
+  accountName: r.account_name,
+  entryType: r.entry_type,
+  amount: Number(r.amount),
+  notes: r.notes ?? undefined,
+  createdAt: r.created_at,
+});
+
 // ========= State global en mémoire =========
-let memory: AppState = { parties: [], products: [], documents: [] };
+let memory: AppState = { parties: [], products: [], documents: [], entries: [] };
 let loaded = false;
 let loading = false;
 const listeners = new Set<() => void>();
@@ -55,15 +67,17 @@ const fetchAll = async () => {
   if (loading) return;
   loading = true;
   try {
-    const [p, prod, doc] = await Promise.all([
+    const [p, prod, doc, ent] = await Promise.all([
       supabase.from("parties").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("documents").select("*").order("created_at", { ascending: false }),
+      supabase.from("accounting_entries").select("*").order("date", { ascending: false }),
     ]);
     memory = {
       parties: (p.data ?? []).map(mapPartyRow),
       products: (prod.data ?? []).map(mapProductRow),
       documents: (doc.data ?? []).map(mapDocRow),
+      entries: (ent.data ?? []).map(mapEntryRow),
     };
     loaded = true;
     notify();
@@ -84,6 +98,7 @@ if (typeof window !== "undefined") {
     .on("postgres_changes", { event: "*", schema: "public", table: "parties" }, () => fetchAll())
     .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => fetchAll())
     .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => fetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "accounting_entries" }, () => fetchAll())
     .subscribe();
 }
 
@@ -236,6 +251,30 @@ export const setDocStatus = async (id: string, status: InvoiceStatus) => {
   await supabase.from("documents").update({ status }).eq("id", id);
   const updated = { ...previous, status };
   await applyStockMovement(updated, previous);
+  await fetchAll();
+};
+
+// ========= Comptabilité =========
+export const upsertEntry = async (e: Omit<AccountingEntry, "id" | "createdAt"> & { id?: string }) => {
+  const row = {
+    date: e.date,
+    label: e.label,
+    account_code: e.accountCode,
+    account_name: e.accountName,
+    entry_type: e.entryType,
+    amount: e.amount,
+    notes: e.notes || null,
+  };
+  if (e.id) {
+    await supabase.from("accounting_entries").update(row).eq("id", e.id);
+  } else {
+    await supabase.from("accounting_entries").insert(row);
+  }
+  await fetchAll();
+};
+
+export const deleteEntry = async (id: string) => {
+  await supabase.from("accounting_entries").delete().eq("id", id);
   await fetchAll();
 };
 

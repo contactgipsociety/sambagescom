@@ -53,8 +53,25 @@ export interface InvoiceDoc {
   createdAt: string;
 }
 
+// ===== Comptabilité SYSCOHADA =====
+// entry_type : "charge" (classe 6), "produit" (classe 7), "actif" (classes 2/3/4/5 actif), "passif" (classes 1/4/5 passif)
+export type EntryType = "charge" | "produit" | "actif" | "passif";
+
+export interface AccountingEntry {
+  id: string;
+  date: string;
+  label: string;
+  accountCode: string;   // ex "6011", "401", "2441"
+  accountName: string;   // ex "Achats de marchandises"
+  entryType: EntryType;
+  amount: number;        // en FCFA
+  notes?: string;
+  createdAt: string;
+}
+
 export interface AppState {
   parties: Party[];
   products: Product[];
   documents: InvoiceDoc[];
+  entries: AccountingEntry[];
 }
