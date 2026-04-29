@@ -42,7 +42,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
-  const isActive = (path: string) => path === "/" ? pathname === "/" : pathname.startsWith(path);
+  const isActive = (path: string) => path === "/" ? pathname === "/" : path === "/pos" ? pathname === "/pos" : pathname === path || pathname.startsWith(path + "/");
 
   const renderGroup = (label: string, items: typeof main) => (
     <SidebarGroup>
