@@ -41,6 +41,8 @@ const mapDocRow = (r: any): InvoiceDoc => ({
   lines: Array.isArray(r.lines) ? r.lines : [],
   status: r.status,
   notes: r.notes ?? undefined,
+  posSessionId: r.pos_session_id ?? undefined,
+  paymentMethod: r.payment_method ?? undefined,
   createdAt: r.created_at,
 });
 
