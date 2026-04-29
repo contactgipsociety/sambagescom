@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { AppState, Party, Product, InvoiceDoc, DocKind, InvoiceStatus } from "./types";
+import type { AppState, Party, Product, InvoiceDoc, DocKind, InvoiceStatus, AccountingEntry } from "./types";
 
 // ========= Mappers DB <-> App =========
 const mapPartyRow = (r: any): Party => ({
