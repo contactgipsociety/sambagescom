@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +32,9 @@ const catalogue = [
 ];
 const finance = [
   { title: "Comptabilité", url: "/comptabilite", icon: BookOpen },
+];
+const systeme = [
+  { title: "Paramètres", url: "/parametres", icon: SettingsIcon },
 ];
 
 export function AppSidebar() {
@@ -83,6 +86,7 @@ export function AppSidebar() {
         {renderGroup("Répertoire", repertoire)}
         {renderGroup("Stock", catalogue)}
         {renderGroup("Finance", finance)}
+        {renderGroup("Système", systeme)}
       </SidebarContent>
     </Sidebar>
   );

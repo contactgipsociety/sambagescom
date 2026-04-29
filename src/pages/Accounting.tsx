@@ -16,24 +16,31 @@ import { SYSCOHADA_ACCOUNTS, accountByCode } from "@/lib/syscohada";
 import { xof, dateFr } from "@/lib/format";
 import { docTotals } from "@/lib/format";
 import type { AccountingEntry, EntryType } from "@/lib/types";
-
-const currentYear = new Date().getFullYear();
+import { useCompany, buildFiscalYear, fiscalYearOf } from "@/lib/company";
 
 export default function Accounting() {
   const { entries, documents, products } = useStore();
-  const [year, setYear] = useState<number>(currentYear);
+  const company = useCompany();
+  const startMonth = company.fiscalYearStartMonth;
+  const startDay = company.fiscalYearStartDay;
+  const [year, setYear] = useState<number>(company.currentFiscalYear);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AccountingEntry | null>(null);
 
+  const fy = useMemo(() => buildFiscalYear(year, startMonth, startDay), [year, startMonth, startDay]);
+
   // ====== Données dérivées des opérations ======
   const yearEntries = useMemo(
-    () => entries.filter((e) => new Date(e.date).getFullYear() === year),
-    [entries, year]
+    () => entries.filter((e) => fiscalYearOf(e.date, startMonth, startDay) === year),
+    [entries, year, startMonth, startDay]
   );
 
   const yearDocs = useMemo(
-    () => documents.filter((d) => new Date(d.date).getFullYear() === year && d.status !== "annulee" && d.status !== "brouillon"),
-    [documents, year]
+    () => documents.filter((d) =>
+      fiscalYearOf(d.date, startMonth, startDay) === year
+      && d.status !== "annulee" && d.status !== "brouillon"
+    ),
+    [documents, year, startMonth, startDay]
   );
 
   // Ventes (701) — HT
@@ -112,11 +119,11 @@ export default function Accounting() {
   const ecartBilan = totalActif - totalPassif;
 
   const years = useMemo(() => {
-    const set = new Set<number>([currentYear]);
-    entries.forEach((e) => set.add(new Date(e.date).getFullYear()));
-    documents.forEach((d) => set.add(new Date(d.date).getFullYear()));
+    const set = new Set<number>([company.currentFiscalYear]);
+    entries.forEach((e) => set.add(fiscalYearOf(e.date, startMonth, startDay)));
+    documents.forEach((d) => set.add(fiscalYearOf(d.date, startMonth, startDay)));
     return Array.from(set).sort((a, b) => b - a);
-  }, [entries, documents]);
+  }, [entries, documents, company.currentFiscalYear, startMonth, startDay]);
 
   const handleSave = async (data: Omit<AccountingEntry, "id" | "createdAt"> & { id?: string }) => {
     await upsertEntry(data);
@@ -129,13 +136,16 @@ export default function Accounting() {
     <div className="space-y-6">
       <PageHeader
         title="Comptabilité"
-        subtitle="Bilan annuel et compte de résultat — conforme SYSCOHADA (Sénégal / OHADA)"
+        subtitle={`${fy.label} · du ${fy.start.toLocaleDateString("fr-FR")} au ${fy.end.toLocaleDateString("fr-FR")} · SYSCOHADA`}
         action={
           <div className="flex items-center gap-2">
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                {years.map((y) => {
+                  const f = buildFiscalYear(y, startMonth, startDay);
+                  return <SelectItem key={y} value={String(y)}>{f.label}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={() => window.print()}>
@@ -169,7 +179,7 @@ export default function Accounting() {
         {/* ============== COMPTE DE RÉSULTAT ============== */}
         <TabsContent value="resultat" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Compte de résultat — Exercice {year}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Compte de résultat — {fy.label}</CardTitle></CardHeader>
             <CardContent className="space-y-1">
               <Section title="PRODUITS D'EXPLOITATION" />
               <Row label="Ventes (701/702/706)" value={produitsExpl} />
@@ -209,7 +219,7 @@ export default function Accounting() {
         <TabsContent value="bilan" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <CardHeader><CardTitle>ACTIF — au 31/12/{year}</CardTitle></CardHeader>
+              <CardHeader><CardTitle>ACTIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="ACTIF IMMOBILISÉ" />
                 <Row label="Immobilisations corporelles (21, 24)" value={immobilisations} />
@@ -231,7 +241,7 @@ export default function Accounting() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>PASSIF — au 31/12/{year}</CardTitle></CardHeader>
+              <CardHeader><CardTitle>PASSIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="CAPITAUX PROPRES" />
                 <Row label="Capital + report à nouveau (101, 121)" value={sumByGroup("Capitaux propres")} />
@@ -278,7 +288,7 @@ export default function Accounting() {
                 </TableHeader>
                 <TableBody>
                   {yearEntries.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Aucune écriture pour {year}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Aucune écriture pour {fy.label}</TableCell></TableRow>
                   )}
                   {yearEntries.map((e) => (
                     <TableRow key={e.id} className="cursor-pointer" onClick={() => { setEditing(e); setOpen(true); }}>
