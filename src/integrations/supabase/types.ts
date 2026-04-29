@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_entries: {
+        Row: {
+          account_code: string
+          account_name: string
+          amount: number
+          created_at: string
+          date: string
+          entry_type: string
+          id: string
+          label: string
+          notes: string | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          amount?: number
+          created_at?: string
+          date?: string
+          entry_type: string
+          id?: string
+          label: string
+          notes?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          amount?: number
+          created_at?: string
+          date?: string
+          entry_type?: string
+          id?: string
+          label?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
