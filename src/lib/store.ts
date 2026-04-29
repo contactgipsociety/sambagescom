@@ -45,7 +45,7 @@ const mapDocRow = (r: any): InvoiceDoc => ({
 });
 
 // ========= State global en mémoire =========
-let memory: AppState = { parties: [], products: [], documents: [] };
+let memory: AppState = { parties: [], products: [], documents: [], entries: [] };
 let loaded = false;
 let loading = false;
 const listeners = new Set<() => void>();
