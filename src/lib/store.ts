@@ -55,12 +55,6 @@ const mapEntryRow = (r: any): AccountingEntry => ({
   notes: r.notes ?? undefined,
   createdAt: r.created_at,
 });
-  dueDate: r.due_date ?? undefined,
-  lines: Array.isArray(r.lines) ? r.lines : [],
-  status: r.status,
-  notes: r.notes ?? undefined,
-  createdAt: r.created_at,
-});
 
 // ========= State global en mémoire =========
 let memory: AppState = { parties: [], products: [], documents: [], entries: [] };
