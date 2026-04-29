@@ -55,15 +55,17 @@ const fetchAll = async () => {
   if (loading) return;
   loading = true;
   try {
-    const [p, prod, doc] = await Promise.all([
+    const [p, prod, doc, ent] = await Promise.all([
       supabase.from("parties").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("documents").select("*").order("created_at", { ascending: false }),
+      supabase.from("accounting_entries").select("*").order("date", { ascending: false }),
     ]);
     memory = {
       parties: (p.data ?? []).map(mapPartyRow),
       products: (prod.data ?? []).map(mapProductRow),
       documents: (doc.data ?? []).map(mapDocRow),
+      entries: (ent.data ?? []).map(mapEntryRow),
     };
     loaded = true;
     notify();
@@ -84,6 +86,7 @@ if (typeof window !== "undefined") {
     .on("postgres_changes", { event: "*", schema: "public", table: "parties" }, () => fetchAll())
     .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => fetchAll())
     .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => fetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "accounting_entries" }, () => fetchAll())
     .subscribe();
 }
 
