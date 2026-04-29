@@ -211,6 +211,8 @@ export const upsertDocument = async (d: Omit<InvoiceDoc, "id" | "createdAt"> & {
     date: d.date, due_date: d.dueDate || null,
     status: d.status, notes: d.notes || null,
     lines: d.lines as any,
+    pos_session_id: d.posSessionId || null,
+    payment_method: d.paymentMethod || null,
   };
 
   let savedId = d.id;

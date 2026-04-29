@@ -50,6 +50,8 @@ export interface InvoiceDoc {
   lines: InvoiceLine[];
   status: InvoiceStatus;
   notes?: string;
+  posSessionId?: string;
+  paymentMethod?: "especes" | "mobile" | "carte" | "cheque" | "virement";
   createdAt: string;
 }
 
