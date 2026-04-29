@@ -11,6 +11,7 @@ import Inventory from "./pages/Inventory";
 import DocumentsPage from "./pages/Documents";
 import POS from "./pages/POS";
 import Accounting from "./pages/Accounting";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/achats" element={<DocumentsPage kind="achat" />} />
             <Route path="/pos" element={<POS />} />
             <Route path="/comptabilite" element={<Accounting />} />
+            <Route path="/parametres" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
