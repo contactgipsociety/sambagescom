@@ -50,6 +50,75 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          currency: string
+          current_fiscal_year: number
+          default_tva: number
+          email: string | null
+          fiscal_year_start_day: number
+          fiscal_year_start_month: number
+          id: string
+          invoice_footer: string | null
+          legal_form: string | null
+          logo_url: string | null
+          name: string
+          ninea: string | null
+          phone: string | null
+          rccm: string | null
+          tax_regime: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          currency?: string
+          current_fiscal_year?: number
+          default_tva?: number
+          email?: string | null
+          fiscal_year_start_day?: number
+          fiscal_year_start_month?: number
+          id?: string
+          invoice_footer?: string | null
+          legal_form?: string | null
+          logo_url?: string | null
+          name?: string
+          ninea?: string | null
+          phone?: string | null
+          rccm?: string | null
+          tax_regime?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          currency?: string
+          current_fiscal_year?: number
+          default_tva?: number
+          email?: string | null
+          fiscal_year_start_day?: number
+          fiscal_year_start_month?: number
+          id?: string
+          invoice_footer?: string | null
+          legal_form?: string | null
+          logo_url?: string | null
+          name?: string
+          ninea?: string | null
+          phone?: string | null
+          rccm?: string | null
+          tax_regime?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
