@@ -10,6 +10,7 @@ import ProductsPage from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import DocumentsPage from "./pages/Documents";
 import POS from "./pages/POS";
+import Accounting from "./pages/Accounting";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
