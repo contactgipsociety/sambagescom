@@ -119,11 +119,11 @@ export default function Accounting() {
   const ecartBilan = totalActif - totalPassif;
 
   const years = useMemo(() => {
-    const set = new Set<number>([currentYear]);
-    entries.forEach((e) => set.add(new Date(e.date).getFullYear()));
-    documents.forEach((d) => set.add(new Date(d.date).getFullYear()));
+    const set = new Set<number>([company.currentFiscalYear]);
+    entries.forEach((e) => set.add(fiscalYearOf(e.date, startMonth, startDay)));
+    documents.forEach((d) => set.add(fiscalYearOf(d.date, startMonth, startDay)));
     return Array.from(set).sort((a, b) => b - a);
-  }, [entries, documents]);
+  }, [entries, documents, company.currentFiscalYear, startMonth, startDay]);
 
   const handleSave = async (data: Omit<AccountingEntry, "id" | "createdAt"> & { id?: string }) => {
     await upsertEntry(data);
@@ -136,13 +136,16 @@ export default function Accounting() {
     <div className="space-y-6">
       <PageHeader
         title="Comptabilité"
-        subtitle="Bilan annuel et compte de résultat — conforme SYSCOHADA (Sénégal / OHADA)"
+        subtitle={`${fy.label} · du ${fy.start.toLocaleDateString("fr-FR")} au ${fy.end.toLocaleDateString("fr-FR")} · SYSCOHADA`}
         action={
           <div className="flex items-center gap-2">
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                {years.map((y) => {
+                  const f = buildFiscalYear(y, startMonth, startDay);
+                  return <SelectItem key={y} value={String(y)}>{f.label}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={() => window.print()}>
