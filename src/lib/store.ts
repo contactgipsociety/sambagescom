@@ -44,6 +44,24 @@ const mapDocRow = (r: any): InvoiceDoc => ({
   createdAt: r.created_at,
 });
 
+const mapEntryRow = (r: any): AccountingEntry => ({
+  id: r.id,
+  date: r.date,
+  label: r.label,
+  accountCode: r.account_code,
+  accountName: r.account_name,
+  entryType: r.entry_type,
+  amount: Number(r.amount),
+  notes: r.notes ?? undefined,
+  createdAt: r.created_at,
+});
+  dueDate: r.due_date ?? undefined,
+  lines: Array.isArray(r.lines) ? r.lines : [],
+  status: r.status,
+  notes: r.notes ?? undefined,
+  createdAt: r.created_at,
+});
+
 // ========= State global en mémoire =========
 let memory: AppState = { parties: [], products: [], documents: [], entries: [] };
 let loaded = false;
