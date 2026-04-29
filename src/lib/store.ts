@@ -254,5 +254,29 @@ export const setDocStatus = async (id: string, status: InvoiceStatus) => {
   await fetchAll();
 };
 
+// ========= Comptabilité =========
+export const upsertEntry = async (e: Omit<AccountingEntry, "id" | "createdAt"> & { id?: string }) => {
+  const row = {
+    date: e.date,
+    label: e.label,
+    account_code: e.accountCode,
+    account_name: e.accountName,
+    entry_type: e.entryType,
+    amount: e.amount,
+    notes: e.notes || null,
+  };
+  if (e.id) {
+    await supabase.from("accounting_entries").update(row).eq("id", e.id);
+  } else {
+    await supabase.from("accounting_entries").insert(row);
+  }
+  await fetchAll();
+};
+
+export const deleteEntry = async (id: string) => {
+  await supabase.from("accounting_entries").delete().eq("id", id);
+  await fetchAll();
+};
+
 // Compat (non utilisé directement)
 export const adjustStock = adjustStockDB;
