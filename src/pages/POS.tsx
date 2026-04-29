@@ -200,22 +200,22 @@ export default function POS() {
   // ===== Vue : session ouverte =====
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader
-        title="Point de vente"
-        subtitle={
-          <span className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Point de vente</h1>
+          <div className="flex items-center gap-2 flex-wrap mt-1.5">
             <Badge className="bg-success/15 text-success border-success/30 hover:bg-success/15"><LockOpen className="h-3 w-3 mr-1" /> Session ouverte</Badge>
-            <span className="text-sm">{session.name}{session.cashier && ` · ${session.cashier}`}</span>
-            <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Clock className="h-3 w-3" /> depuis {new Date(session.openedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
-          </span>
-        }
-        actions={
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm" className="gap-1.5"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Analyse</Link></Button>
-            <Button onClick={() => { setCloseCounted(expectedCash); setCloseDlg(true); }} variant="outline" size="sm" className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"><Lock className="h-4 w-4" /> Fermer la caisse</Button>
+            <span className="text-sm text-muted-foreground">{session.name}{session.cashier && ` · ${session.cashier}`}</span>
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" /> depuis {new Date(session.openedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            </span>
           </div>
-        }
-      />
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm" className="gap-1.5"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Analyse</Link></Button>
+          <Button onClick={() => { setCloseCounted(expectedCash); setCloseDlg(true); }} variant="outline" size="sm" className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"><Lock className="h-4 w-4" /> Fermer la caisse</Button>
+        </div>
+      </div>
 
       {/* KPIs session */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
