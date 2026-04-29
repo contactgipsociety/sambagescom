@@ -179,7 +179,7 @@ export default function Accounting() {
         {/* ============== COMPTE DE RÉSULTAT ============== */}
         <TabsContent value="resultat" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Compte de résultat — Exercice {year}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Compte de résultat — {fy.label}</CardTitle></CardHeader>
             <CardContent className="space-y-1">
               <Section title="PRODUITS D'EXPLOITATION" />
               <Row label="Ventes (701/702/706)" value={produitsExpl} />
@@ -219,7 +219,7 @@ export default function Accounting() {
         <TabsContent value="bilan" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <CardHeader><CardTitle>ACTIF — au 31/12/{year}</CardTitle></CardHeader>
+              <CardHeader><CardTitle>ACTIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="ACTIF IMMOBILISÉ" />
                 <Row label="Immobilisations corporelles (21, 24)" value={immobilisations} />
@@ -241,7 +241,7 @@ export default function Accounting() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>PASSIF — au 31/12/{year}</CardTitle></CardHeader>
+              <CardHeader><CardTitle>PASSIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="CAPITAUX PROPRES" />
                 <Row label="Capital + report à nouveau (101, 121)" value={sumByGroup("Capitaux propres")} />
@@ -288,7 +288,7 @@ export default function Accounting() {
                 </TableHeader>
                 <TableBody>
                   {yearEntries.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Aucune écriture pour {year}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Aucune écriture pour {fy.label}</TableCell></TableRow>
                   )}
                   {yearEntries.map((e) => (
                     <TableRow key={e.id} className="cursor-pointer" onClick={() => { setEditing(e); setOpen(true); }}>
