@@ -28,7 +28,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => { setForm(company); }, [company.id, company.updatedAtKey ?? company.name]);
+  useEffect(() => { setForm(company); }, [company.id, company.name, company.logoUrl]);
 
   const set = <K extends keyof CompanySettings>(k: K, v: CompanySettings[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
