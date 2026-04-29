@@ -33,6 +33,8 @@ const catalogue = [
 const finance = [
   { title: "Comptabilité", url: "/comptabilite", icon: BookOpen },
 ];
+
+export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
