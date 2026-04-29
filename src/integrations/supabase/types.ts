@@ -130,6 +130,8 @@ export type Database = {
           notes: string | null
           number: string
           party_id: string | null
+          payment_method: string | null
+          pos_session_id: string | null
           status: string
         }
         Insert: {
@@ -142,6 +144,8 @@ export type Database = {
           notes?: string | null
           number: string
           party_id?: string | null
+          payment_method?: string | null
+          pos_session_id?: string | null
           status?: string
         }
         Update: {
@@ -154,6 +158,8 @@ export type Database = {
           notes?: string | null
           number?: string
           party_id?: string | null
+          payment_method?: string | null
+          pos_session_id?: string | null
           status?: string
         }
         Relationships: [
@@ -199,6 +205,45 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           type?: string
+        }
+        Relationships: []
+      }
+      pos_sessions: {
+        Row: {
+          cashier: string | null
+          closed_at: string | null
+          closing_balance_counted: number | null
+          closing_notes: string | null
+          created_at: string
+          id: string
+          name: string
+          opened_at: string
+          opening_balance: number
+          status: string
+        }
+        Insert: {
+          cashier?: string | null
+          closed_at?: string | null
+          closing_balance_counted?: number | null
+          closing_notes?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          opened_at?: string
+          opening_balance?: number
+          status?: string
+        }
+        Update: {
+          cashier?: string | null
+          closed_at?: string | null
+          closing_balance_counted?: number | null
+          closing_notes?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          opened_at?: string
+          opening_balance?: number
+          status?: string
         }
         Relationships: []
       }

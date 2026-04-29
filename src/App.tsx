@@ -10,6 +10,7 @@ import ProductsPage from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import DocumentsPage from "./pages/Documents";
 import POS from "./pages/POS";
+import POSAnalysis from "./pages/POSAnalysis";
 import Accounting from "./pages/Accounting";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound.tsx";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/ventes" element={<DocumentsPage kind="facture" />} />
             <Route path="/achats" element={<DocumentsPage kind="achat" />} />
             <Route path="/pos" element={<POS />} />
+            <Route path="/pos/analyse" element={<POSAnalysis />} />
             <Route path="/comptabilite" element={<Accounting />} />
             <Route path="/parametres" element={<Settings />} />
           </Route>
