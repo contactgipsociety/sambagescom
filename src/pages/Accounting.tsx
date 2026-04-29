@@ -16,24 +16,31 @@ import { SYSCOHADA_ACCOUNTS, accountByCode } from "@/lib/syscohada";
 import { xof, dateFr } from "@/lib/format";
 import { docTotals } from "@/lib/format";
 import type { AccountingEntry, EntryType } from "@/lib/types";
-
-const currentYear = new Date().getFullYear();
+import { useCompany, buildFiscalYear, fiscalYearOf } from "@/lib/company";
 
 export default function Accounting() {
   const { entries, documents, products } = useStore();
-  const [year, setYear] = useState<number>(currentYear);
+  const company = useCompany();
+  const startMonth = company.fiscalYearStartMonth;
+  const startDay = company.fiscalYearStartDay;
+  const [year, setYear] = useState<number>(company.currentFiscalYear);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AccountingEntry | null>(null);
 
+  const fy = useMemo(() => buildFiscalYear(year, startMonth, startDay), [year, startMonth, startDay]);
+
   // ====== Données dérivées des opérations ======
   const yearEntries = useMemo(
-    () => entries.filter((e) => new Date(e.date).getFullYear() === year),
-    [entries, year]
+    () => entries.filter((e) => fiscalYearOf(e.date, startMonth, startDay) === year),
+    [entries, year, startMonth, startDay]
   );
 
   const yearDocs = useMemo(
-    () => documents.filter((d) => new Date(d.date).getFullYear() === year && d.status !== "annulee" && d.status !== "brouillon"),
-    [documents, year]
+    () => documents.filter((d) =>
+      fiscalYearOf(d.date, startMonth, startDay) === year
+      && d.status !== "annulee" && d.status !== "brouillon"
+    ),
+    [documents, year, startMonth, startDay]
   );
 
   // Ventes (701) — HT
