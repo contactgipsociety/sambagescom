@@ -86,6 +86,7 @@ export function AppSidebar() {
         {renderGroup("Répertoire", repertoire)}
         {renderGroup("Stock", catalogue)}
         {renderGroup("Finance", finance)}
+        {renderGroup("Système", systeme)}
       </SidebarContent>
     </Sidebar>
   );
