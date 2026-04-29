@@ -1,24 +1,45 @@
 import { useMemo, useState } from "react";
 import { useStore, upsertDocument, nextDocNumber } from "@/lib/store";
+import { useCurrentSession, openSession, closeSession, PAYMENT_LABELS, type PaymentMethod } from "@/lib/pos";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X, ImageIcon, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X, ImageIcon,
+  CheckCircle2, LockOpen, Lock, Clock, Wallet, BarChart3,
+} from "lucide-react";
 import { xof, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceLine, InvoiceDoc } from "@/lib/types";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface CartItem extends InvoiceLine { stock: number; }
 
 export default function POS() {
   const s = useStore();
+  const session = useCurrentSession();
+
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("__all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [partyId, setPartyId] = useState<string>("__none");
   const [paid, setPaid] = useState<number>(0);
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("especes");
+
+  // Dialogs
+  const [openDlg, setOpenDlg] = useState(false);
+  const [closeDlg, setCloseDlg] = useState(false);
+  const [openName, setOpenName] = useState("");
+  const [openCashier, setOpenCashier] = useState("");
+  const [openBalance, setOpenBalance] = useState<number>(0);
+  const [closeCounted, setCloseCounted] = useState<number>(0);
+  const [closeNotes, setCloseNotes] = useState("");
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -34,22 +55,32 @@ export default function POS() {
 
   const clients = s.parties.filter((p) => p.type === "client");
 
+  // Statistiques de la session courante
+  const sessionStats = useMemo(() => {
+    if (!session) return { count: 0, total: 0, byMethod: {} as Record<string, number>, especes: 0 };
+    const docs = s.documents.filter((d) => d.posSessionId === session.id && d.status === "payee");
+    const total = docs.reduce((sum, d) => sum + d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0), 0);
+    const byMethod: Record<string, number> = {};
+    docs.forEach((d) => {
+      const m = d.paymentMethod ?? "especes";
+      const t = d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
+      byMethod[m] = (byMethod[m] ?? 0) + t;
+    });
+    return { count: docs.length, total, byMethod, especes: byMethod.especes ?? 0 };
+  }, [s.documents, session]);
+
+  const expectedCash = session ? session.openingBalance + (sessionStats.especes ?? 0) : 0;
+
   const addToCart = (productId: string) => {
     const p = s.products.find((x) => x.id === productId);
     if (!p) return;
     setCart((c) => {
       const existing = c.find((x) => x.productId === productId);
       if (existing) {
-        if (existing.quantity + 1 > p.stock) {
-          toast.warning(`Stock insuffisant (${p.stock} ${p.unit})`);
-          return c;
-        }
+        if (existing.quantity + 1 > p.stock) { toast.warning(`Stock insuffisant (${p.stock} ${p.unit})`); return c; }
         return c.map((x) => x.productId === productId ? { ...x, quantity: x.quantity + 1 } : x);
       }
-      if (p.stock <= 0) {
-        toast.warning("Article en rupture");
-        return c;
-      }
+      if (p.stock <= 0) { toast.warning("Article en rupture"); return c; }
       return [...c, { id: uid(), productId, description: p.name, quantity: 1, unitPriceHT: p.priceHT, tvaRate: p.tvaRate, stock: p.stock }];
     });
   };
@@ -74,45 +105,125 @@ export default function POS() {
 
   const change = paid - totals.ttc;
 
+  const handleOpenSession = async () => {
+    if (!openName.trim()) return toast.error("Nom de session requis");
+    try {
+      await openSession({ name: openName.trim(), cashier: openCashier.trim() || undefined, openingBalance: openBalance });
+      toast.success("Session de caisse ouverte");
+      setOpenDlg(false);
+      setOpenName(""); setOpenCashier(""); setOpenBalance(0);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erreur");
+    }
+  };
+
+  const handleCloseSession = async () => {
+    if (!session) return;
+    await closeSession(session.id, { closingBalanceCounted: closeCounted, closingNotes: closeNotes.trim() || undefined });
+    const ecart = closeCounted - expectedCash;
+    toast.success(`Session fermée — écart caisse : ${xof(ecart)}`);
+    setCloseDlg(false);
+    setCloseCounted(0); setCloseNotes("");
+  };
+
   const checkout = async (mode: "validate" | "ticket" | "invoice") => {
+    if (!session) return toast.error("Ouvrez d'abord une session de caisse");
     if (cart.length === 0) return toast.error("Panier vide");
     const usePartyId = partyId !== "__none" ? partyId : (clients[0]?.id ?? "");
     if (!usePartyId) return toast.error("Créez d'abord un client (au moins un)");
 
     const number = nextDocNumber("facture");
     const doc: InvoiceDoc = {
-      id: uid(),
-      kind: "facture",
-      number,
-      partyId: usePartyId,
+      id: uid(), kind: "facture", number, partyId: usePartyId,
       date: new Date().toISOString().slice(0, 10),
       lines: cart.map(({ stock, ...l }) => l),
       status: "payee",
+      posSessionId: session.id,
+      paymentMethod: payMethod,
       createdAt: new Date().toISOString(),
     };
 
     await upsertDocument({
-      kind: doc.kind,
-      number: doc.number,
-      partyId: doc.partyId,
-      date: doc.date,
-      lines: doc.lines,
-      status: doc.status,
+      kind: doc.kind, number: doc.number, partyId: doc.partyId, date: doc.date,
+      lines: doc.lines, status: doc.status,
+      posSessionId: session.id, paymentMethod: payMethod,
     });
 
     const party = s.parties.find((p) => p.id === usePartyId);
     if (mode === "ticket") printTicket(doc, party);
-    else if (mode === "invoice") printInvoice(doc, party);
-    else printInvoice(doc, party); // "validate" → facture auto
+    else printInvoice(doc, party);
 
-    toast.success(`Vente ${number} validée — facture générée`);
-    setCart([]);
-    setPaid(0);
+    toast.success(`Vente ${number} validée — ${PAYMENT_LABELS[payMethod]}`);
+    setCart([]); setPaid(0);
   };
 
+  // ===== Vue : pas de session =====
+  if (!session) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <PageHeader title="Point de vente" subtitle="Aucune session de caisse ouverte" />
+        <div className="bg-card border border-border rounded-xl p-10 text-center space-y-5">
+          <div className="h-16 w-16 mx-auto rounded-full bg-primary-soft flex items-center justify-center">
+            <Lock className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Caisse fermée</h3>
+            <p className="text-sm text-muted-foreground mt-1">Ouvrez une session pour commencer à encaisser. Le solde d'ouverture sera la base pour calculer l'écart de caisse à la fermeture.</p>
+          </div>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => setOpenDlg(true)} className="gap-2"><LockOpen className="h-4 w-4" /> Ouvrir une session</Button>
+            <Button asChild variant="outline" className="gap-2"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Voir l'analyse</Link></Button>
+          </div>
+        </div>
+
+        <Dialog open={openDlg} onOpenChange={setOpenDlg}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ouvrir une session de caisse</DialogTitle>
+              <DialogDescription>Renseignez le solde initial présent en caisse.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Nom de la session</Label><Input value={openName} onChange={(e) => setOpenName(e.target.value)} placeholder="Ex: Caisse principale — 29/04" /></div>
+              <div><Label>Caissier</Label><Input value={openCashier} onChange={(e) => setOpenCashier(e.target.value)} placeholder="Nom du caissier" /></div>
+              <div><Label>Solde d'ouverture (FCFA)</Label><Input type="number" value={openBalance || ""} onChange={(e) => setOpenBalance(Number(e.target.value))} /></div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenDlg(false)}>Annuler</Button>
+              <Button onClick={handleOpenSession}>Ouvrir la session</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ===== Vue : session ouverte =====
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader title="Point de vente" subtitle="Encaissez rapidement et imprimez tickets ou factures" />
+      <PageHeader
+        title="Point de vente"
+        subtitle={
+          <span className="flex items-center gap-2 flex-wrap">
+            <Badge className="bg-success/15 text-success border-success/30 hover:bg-success/15"><LockOpen className="h-3 w-3 mr-1" /> Session ouverte</Badge>
+            <span className="text-sm">{session.name}{session.cashier && ` · ${session.cashier}`}</span>
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Clock className="h-3 w-3" /> depuis {new Date(session.openedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+          </span>
+        }
+        actions={
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm" className="gap-1.5"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Analyse</Link></Button>
+            <Button onClick={() => { setCloseCounted(expectedCash); setCloseDlg(true); }} variant="outline" size="sm" className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"><Lock className="h-4 w-4" /> Fermer la caisse</Button>
+          </div>
+        }
+      />
+
+      {/* KPIs session */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <KpiCard label="Ventes session" value={sessionStats.count.toString()} icon={ReceiptText} />
+        <KpiCard label="Total encaissé" value={xof(sessionStats.total)} icon={Wallet} highlight />
+        <KpiCard label="Solde initial" value={xof(session.openingBalance)} icon={LockOpen} />
+        <KpiCard label="Espèces théoriques" value={xof(expectedCash)} icon={Wallet} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4">
         {/* Catalogue */}
@@ -135,18 +246,10 @@ export default function POS() {
             {products.map((p) => {
               const out = p.stock <= 0;
               return (
-                <button
-                  key={p.id}
-                  disabled={out}
-                  onClick={() => addToCart(p.id)}
-                  className="text-left bg-card border border-border rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col"
-                >
+                <button key={p.id} disabled={out} onClick={() => addToCart(p.id)}
+                  className="text-left bg-card border border-border rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col">
                   <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                    )}
+                    {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" /> : <ImageIcon className="h-8 w-8 text-muted-foreground/40" />}
                   </div>
                   <div className="p-2.5 flex-1 flex flex-col">
                     <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{p.name}</div>
@@ -156,19 +259,15 @@ export default function POS() {
                 </button>
               );
             })}
-            {products.length === 0 && (
-              <div className="col-span-full text-center py-12 text-sm text-muted-foreground">Aucun article</div>
-            )}
+            {products.length === 0 && <div className="col-span-full text-center py-12 text-sm text-muted-foreground">Aucun article</div>}
           </div>
         </div>
 
         {/* Panier */}
-        <div className="bg-card border border-border rounded-lg flex flex-col h-[calc(100vh-200px)] sticky top-4">
+        <div className="bg-card border border-border rounded-lg flex flex-col h-[calc(100vh-280px)] sticky top-4">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold"><ShoppingBag className="h-4 w-4" /> Panier ({cart.length})</div>
-            {cart.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setCart([])} className="text-destructive h-7"><X className="h-3.5 w-3.5 mr-1" /> Vider</Button>
-            )}
+            {cart.length > 0 && <Button variant="ghost" size="sm" onClick={() => setCart([])} className="text-destructive h-7"><X className="h-3.5 w-3.5 mr-1" /> Vider</Button>}
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -198,13 +297,21 @@ export default function POS() {
           </div>
 
           <div className="border-t border-border p-4 space-y-3 bg-muted/20">
-            <Select value={partyId} onValueChange={setPartyId}>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Client (optionnel)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none">Client comptoir</SelectItem>
-                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={partyId} onValueChange={setPartyId}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Client" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">Client comptoir</SelectItem>
+                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={payMethod} onValueChange={(v) => setPayMethod(v as PaymentMethod)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAYMENT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-1 text-sm">
               <div className="flex justify-between text-muted-foreground"><span>Sous-total HT</span><span>{xof(totals.ht)}</span></div>
@@ -223,11 +330,7 @@ export default function POS() {
               </div>
             </div>
 
-            <Button
-              onClick={() => checkout("validate")}
-              disabled={cart.length === 0}
-              className="w-full gap-2 h-11 text-base font-semibold bg-success hover:bg-success/90 text-success-foreground"
-            >
+            <Button onClick={() => checkout("validate")} disabled={cart.length === 0} className="w-full gap-2 h-11 text-base font-semibold bg-success hover:bg-success/90 text-success-foreground">
               <CheckCircle2 className="h-5 w-5" /> Valider la vente
             </Button>
 
@@ -238,6 +341,61 @@ export default function POS() {
           </div>
         </div>
       </div>
+
+      {/* Dialog fermeture */}
+      <Dialog open={closeDlg} onOpenChange={setCloseDlg}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fermer la session de caisse</DialogTitle>
+            <DialogDescription>Comptez les espèces réellement présentes en caisse.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-lg bg-muted/40 border border-border p-3 space-y-1.5 text-sm">
+              <Row label="Solde d'ouverture" value={xof(session.openingBalance)} />
+              <Row label="Encaissements espèces" value={xof(sessionStats.especes)} />
+              <Row label="Espèces théoriques" value={xof(expectedCash)} bold />
+              <div className="pt-1.5 border-t border-border text-xs text-muted-foreground">
+                Total ventes session : <span className="font-medium text-foreground">{xof(sessionStats.total)}</span> · {sessionStats.count} ticket(s)
+              </div>
+            </div>
+            <div>
+              <Label>Espèces comptées en caisse (FCFA)</Label>
+              <Input type="number" value={closeCounted || ""} onChange={(e) => setCloseCounted(Number(e.target.value))} />
+            </div>
+            <div className="rounded-md border border-border p-2.5 text-sm flex justify-between items-center">
+              <span className="text-muted-foreground">Écart</span>
+              <span className={`font-semibold ${closeCounted - expectedCash === 0 ? "text-success" : "text-destructive"}`}>
+                {xof(closeCounted - expectedCash)}
+              </span>
+            </div>
+            <div>
+              <Label>Notes (optionnel)</Label>
+              <Textarea value={closeNotes} onChange={(e) => setCloseNotes(e.target.value)} placeholder="Justification d'écart, observations…" rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCloseDlg(false)}>Annuler</Button>
+            <Button onClick={handleCloseSession} variant="destructive"><Lock className="h-4 w-4 mr-1" /> Fermer la session</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function KpiCard({ label, value, icon: Icon, highlight }: { label: string; value: string; icon: any; highlight?: boolean }) {
+  return (
+    <div className={`rounded-lg border p-3 ${highlight ? "bg-primary-soft border-primary/30" : "bg-card border-border"}`}>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-3.5 w-3.5" /> {label}</div>
+      <div className={`text-lg font-bold mt-1 ${highlight ? "text-primary" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "font-semibold" : "text-muted-foreground"}`}>
+      <span>{label}</span><span>{value}</span>
     </div>
   );
 }
