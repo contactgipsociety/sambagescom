@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ const main = [
 ];
 const operations = [
   { title: "Caisse / POS", url: "/pos", icon: ScanLine },
+  { title: "Analyse caisse", url: "/pos/analyse", icon: BarChart3 },
   { title: "Ventes", url: "/ventes", icon: Receipt },
   { title: "Achats", url: "/achats", icon: ShoppingCart },
   { title: "Devis", url: "/devis", icon: FileText },
