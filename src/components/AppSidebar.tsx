@@ -30,8 +30,9 @@ const catalogue = [
   { title: "Catalogue", url: "/catalogue", icon: Tag },
   { title: "Inventaire", url: "/inventaire", icon: Boxes },
 ];
-
-export function AppSidebar() {
+const finance = [
+  { title: "Comptabilité", url: "/comptabilite", icon: BookOpen },
+];
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
