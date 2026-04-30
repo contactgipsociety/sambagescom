@@ -28,6 +28,14 @@ export default function POSAnalysis() {
   const docTotal = (d: typeof s.documents[number]) =>
     d.lines.reduce((sum, l) => sum + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
 
+  const cashCodes = useMemo(() => {
+    const set = new Set(methods.filter((m) => m.kind === "cash").map((m) => m.code));
+    if (set.size === 0) set.add("especes");
+    return set;
+  }, [methods]);
+  const sumCash = (byMethod: Record<string, number>) =>
+    Object.entries(byMethod).filter(([k]) => cashCodes.has(k)).reduce((s, [, v]) => s + v, 0);
+
   const stats = (sessionId: string) => {
     const docs = s.documents.filter((d) => d.posSessionId === sessionId && d.status === "payee");
     const total = docs.reduce((sum, d) => sum + docTotal(d), 0);
@@ -45,15 +53,15 @@ export default function POSAnalysis() {
     const totalTickets = sessions.reduce((sum, sess) => sum + stats(sess.id).count, 0);
     const totalEcart = closed.reduce((sum, sess) => {
       const { byMethod } = stats(sess.id);
-      const expected = sess.openingBalance + (byMethod.especes ?? 0);
+      const expected = sess.openingBalance + sumCash(byMethod);
       return sum + ((sess.closingBalanceCounted ?? expected) - expected);
     }, 0);
     return { totalRevenue, totalTickets, totalEcart, sessionsCount: sessions.length };
-  }, [sessions, s.documents]);
+  }, [sessions, s.documents, cashCodes]);
 
   const detail = selected ? sessions.find((s) => s.id === selected) : null;
   const detailStats = detail ? stats(detail.id) : null;
-  const expectedCash = detail ? detail.openingBalance + (detailStats!.byMethod.especes ?? 0) : 0;
+  const expectedCash = detail ? detail.openingBalance + sumCash(detailStats!.byMethod) : 0;
   const ecart = detail && detail.closingBalanceCounted != null ? detail.closingBalanceCounted - expectedCash : null;
 
   // Top produits sur toutes sessions
