@@ -122,7 +122,7 @@ export default function POSAnalysis() {
                 )}
                 {sessions.map((sess) => {
                   const st = stats(sess.id);
-                  const exp = sess.openingBalance + (st.byMethod.especes ?? 0);
+                  const exp = sess.openingBalance + sumCash(st.byMethod);
                   const ec = sess.closingBalanceCounted != null ? sess.closingBalanceCounted - exp : null;
                   return (
                     <TableRow key={sess.id} onClick={() => setSelected(sess.id)} className="cursor-pointer">
