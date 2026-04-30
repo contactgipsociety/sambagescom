@@ -240,9 +240,28 @@ export default function POS() {
         <KpiCard label="Espèces théoriques" value={xof(expectedCash)} icon={Wallet} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4">
-        {/* Catalogue */}
-        <div className="space-y-3">
+      {/* Paiements du jour par catégorie */}
+      {sessionStats.count > 0 && (
+        <div className="bg-card border border-border rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Paiements reçus aujourd'hui</h3>
+            <span className="text-xs text-muted-foreground">{sessionStats.count} ticket(s)</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            {methods.map((m) => {
+              const amt = sessionStats.byMethod[m.code] ?? 0;
+              const pct = sessionStats.total > 0 ? (amt / sessionStats.total) * 100 : 0;
+              return (
+                <div key={m.code} className={`rounded-md border p-2 ${amt > 0 ? "border-primary/30 bg-primary-soft/30" : "border-border bg-muted/20"}`}>
+                  <div className="text-[11px] text-muted-foreground truncate">{m.label}</div>
+                  <div className={`text-sm font-bold ${amt > 0 ? "text-primary" : "text-muted-foreground"}`}>{xof(amt)}</div>
+                  {amt > 0 && <div className="text-[10px] text-muted-foreground">{pct.toFixed(0)}% du total</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
