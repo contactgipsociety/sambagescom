@@ -30,6 +30,7 @@ const config = {
 
 export default function DocumentsPage({ kind }: Props) {
   const s = useStore();
+  const methods = useActivePaymentMethods();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<InvoiceDoc | null>(null);
 
@@ -37,6 +38,7 @@ export default function DocumentsPage({ kind }: Props) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
 
   const cfg = config[kind];
