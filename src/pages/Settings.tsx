@@ -262,6 +262,9 @@ export default function Settings() {
         </Button>
       </div>
 
+      {/* MOYENS DE PAIEMENT */}
+      <PaymentMethodsCard />
+
       {/* ZONE DANGER */}
       <Card className="border-destructive/40">
         <CardHeader>
