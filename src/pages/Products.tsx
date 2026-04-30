@@ -25,6 +25,42 @@ export default function ProductsPage() {
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [uploading, setUploading] = useState(false);
 
+  // Import Excel
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importDlg, setImportDlg] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [previewRows, setPreviewRows] = useState<ImportRow[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  const onPickXlsx = async (file?: File) => {
+    if (!file) return;
+    try {
+      const rows = await parseProductsXlsx(file);
+      if (rows.length === 0) return toast.error("Fichier vide ou format invalide");
+      setPreviewRows(rows);
+      setImportResult(null);
+      setImportDlg(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Lecture Excel impossible");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const runImport = async () => {
+    setImporting(true);
+    try {
+      const res = await importProductsXlsx(previewRows, s.products);
+      setImportResult(res);
+      const ok = res.created + res.updated;
+      toast.success(`${ok} article(s) importé(s) · ${res.errors.length} erreur(s)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Échec de l'import");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleUpload = async (file: File) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) return toast.error("Image trop lourde (max 5 Mo)");
