@@ -179,7 +179,7 @@ export default function POSAnalysis() {
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trésorerie</h4>
                   <div className="rounded-lg border border-border p-3 space-y-1.5 text-sm">
                     <Row label="Solde d'ouverture" value={xof(detail.openingBalance)} />
-                    <Row label="Encaissements espèces" value={xof(detailStats.byMethod.especes ?? 0)} />
+                    <Row label="Encaissements espèces" value={xof(sumCash(detailStats.byMethod))} />
                     <Row label="Espèces théoriques" value={xof(expectedCash)} bold />
                     <Row label="Espèces comptées" value={detail.closingBalanceCounted != null ? xof(detail.closingBalanceCounted) : "—"} />
                     {ecart != null && (
