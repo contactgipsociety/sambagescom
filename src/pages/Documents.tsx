@@ -136,6 +136,7 @@ export default function DocumentsPage({ kind }: Props) {
                 <th className="text-left px-5 py-3 font-medium">{cfg.partyLabel}</th>
                 <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Date</th>
                 <th className="text-right px-5 py-3 font-medium">Total TTC</th>
+                <th className="text-left px-5 py-3 font-medium hidden lg:table-cell">Paiement</th>
                 <th className="text-left px-5 py-3 font-medium">Statut</th>
                 <th className="w-12"></th>
               </tr>
@@ -150,6 +151,9 @@ export default function DocumentsPage({ kind }: Props) {
                     <td className="px-5 py-3 font-medium">{party?.name ?? "—"}</td>
                     <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{dateFr(d.date)}</td>
                     <td className="px-5 py-3 text-right font-medium">{xof(t.ttc)}</td>
+                    <td className="px-5 py-3 hidden lg:table-cell">
+                      {d.paymentMethod ? <Badge variant="outline" className="text-xs">{getPaymentLabel(d.paymentMethod)}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
                     <td className="px-5 py-3"><StatusBadge status={d.status} /></td>
                     <td className="px-5 py-3">
                       <DropdownMenu>
