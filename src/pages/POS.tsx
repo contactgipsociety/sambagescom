@@ -168,7 +168,7 @@ export default function POS() {
     if (mode === "ticket") printTicket(doc, party);
     else printInvoice(doc, party);
 
-    toast.success(`Vente ${number} validée — ${PAYMENT_LABELS[payMethod]}`);
+    toast.success(`Vente ${number} validée — ${getPaymentLabel(payMethod)}`);
     setCart([]); setPaid(0);
   };
 
