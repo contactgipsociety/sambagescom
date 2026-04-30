@@ -173,8 +173,14 @@ export default function Accounting() {
         <TabsList>
           <TabsTrigger value="resultat"><FileText className="h-4 w-4 mr-2" />Compte de résultat</TabsTrigger>
           <TabsTrigger value="bilan"><Scale className="h-4 w-4 mr-2" />Bilan</TabsTrigger>
+          <TabsTrigger value="encaissements">Encaissements</TabsTrigger>
           <TabsTrigger value="ecritures">Écritures ({yearEntries.length})</TabsTrigger>
         </TabsList>
+
+        {/* ============== ENCAISSEMENTS PAR MOYEN ============== */}
+        <TabsContent value="encaissements" className="space-y-4">
+          <EncaissementsParMoyen docs={yearDocs} />
+        </TabsContent>
 
         {/* ============== COMPTE DE RÉSULTAT ============== */}
         <TabsContent value="resultat" className="space-y-4">
