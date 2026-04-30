@@ -15,7 +15,15 @@ import { toast } from "sonner";
 export default function POSAnalysis() {
   const s = useStore();
   const sessions = usePosSessions();
+  const methods = usePaymentMethods();
   const [selected, setSelected] = useState<string | null>(null);
+
+  // Codes connus dans la base + ceux trouvés sur les docs (sécurité)
+  const allMethodCodes = useMemo(() => {
+    const set = new Set<string>(methods.map((m) => m.code));
+    s.documents.forEach((d) => { if (d.paymentMethod) set.add(d.paymentMethod); });
+    return Array.from(set);
+  }, [methods, s.documents]);
 
   const docTotal = (d: typeof s.documents[number]) =>
     d.lines.reduce((sum, l) => sum + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
