@@ -136,7 +136,29 @@ export default function ProductsPage() {
       <PageHeader
         title="Catalogue produits"
         subtitle={`${list.length} article${list.length > 1 ? "s" : ""} · Valeur stock ${xof(valeurStock)} · Valeur vente ${xof(valeurVente)}`}
-        action={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>}
+        action={
+          <div className="flex gap-2">
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => onPickXlsx(e.target.files?.[0])} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2"><FileSpreadsheet className="h-4 w-4" /> Excel <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> Importer un fichier .xlsx
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportProductsXlsx(s.products)}>
+                  <Download className="h-4 w-4 mr-2" /> Exporter le catalogue
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={downloadTemplateXlsx}>
+                  <FileDown className="h-4 w-4 mr-2" /> Télécharger le modèle
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>
+          </div>
+        }
       />
 
       <div className="mb-4 flex flex-col sm:flex-row gap-2">
