@@ -214,7 +214,7 @@ export default function POSAnalysis() {
                         <TableRow key={d.id}>
                           <TableCell className="font-mono text-xs">{d.number}</TableCell>
                           <TableCell className="text-xs">{new Date(d.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                          <TableCell><Badge variant="outline" className="text-xs">{PAYMENT_LABELS[(d.paymentMethod ?? "especes") as PaymentMethod]}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{getPaymentLabel(d.paymentMethod ?? "especes")}</Badge></TableCell>
                           <TableCell className="text-right font-semibold">{xof(docTotal(d))}</TableCell>
                         </TableRow>
                       ))}
