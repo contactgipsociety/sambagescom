@@ -51,7 +51,7 @@ export interface InvoiceDoc {
   status: InvoiceStatus;
   notes?: string;
   posSessionId?: string;
-  paymentMethod?: "especes" | "mobile" | "carte" | "cheque" | "virement";
+  paymentMethod?: string; // code défini dans payment_methods (ex: "especes", "wave", "orange_money", "compte_client")
   createdAt: string;
 }
 

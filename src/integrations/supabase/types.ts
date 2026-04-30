@@ -208,6 +208,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_code: string | null
+          code: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_credit: boolean
+          kind: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          account_code?: string | null
+          code: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_credit?: boolean
+          kind?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          account_code?: string | null
+          code?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_credit?: boolean
+          kind?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pos_sessions: {
         Row: {
           cashier: string | null

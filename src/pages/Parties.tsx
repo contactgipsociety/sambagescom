@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, Users, Building2, Mail, Phone } from "lucide-react";
+import { xof } from "@/lib/format";
 import type { Party, PartyType } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -19,6 +20,13 @@ export default function PartiesPage({ type }: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Party | null>(null);
 
+  // Solde dû par tiers : factures (vente) ou achats avec statut "envoyee" (= non payés)
+  const balanceOf = (partyId: string) => {
+    return s.documents
+      .filter((d) => d.partyId === partyId && d.status === "envoyee" && (type === "client" ? d.kind === "facture" : d.kind === "achat"))
+      .reduce((sum, d) => sum + d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0), 0);
+  };
+
   const list = s.parties
     .filter((p) => p.type === type)
     .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()) || (p.email ?? "").toLowerCase().includes(q.toLowerCase()));
@@ -26,6 +34,7 @@ export default function PartiesPage({ type }: Props) {
   const isClient = type === "client";
   const Icon = isClient ? Users : Building2;
   const title = isClient ? "Clients" : "Fournisseurs";
+  const totalBalance = list.reduce((s, p) => s + balanceOf(p.id), 0);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Party) => { setEditing(p); setOpen(true); };
@@ -59,7 +68,7 @@ export default function PartiesPage({ type }: Props) {
     <div className="max-w-6xl mx-auto">
       <PageHeader
         title={title}
-        subtitle={`${list.length} ${type}${list.length > 1 ? "s" : ""}`}
+        subtitle={`${list.length} ${type}${list.length > 1 ? "s" : ""}${totalBalance > 0 ? ` · Solde dû total : ${xof(totalBalance)}` : ""}`}
         action={
           <Button onClick={openNew} className="gap-2">
             <Plus className="h-4 w-4" /> Nouveau {isClient ? "client" : "fournisseur"}
@@ -87,11 +96,14 @@ export default function PartiesPage({ type }: Props) {
                 <th className="text-left px-5 py-3 font-medium">Nom</th>
                 <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Contact</th>
                 <th className="text-left px-5 py-3 font-medium hidden lg:table-cell">Adresse</th>
+                <th className="text-right px-5 py-3 font-medium">{isClient ? "Créance" : "Dette"}</th>
                 <th className="w-24"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {list.map((p) => (
+              {list.map((p) => {
+                const bal = balanceOf(p.id);
+                return (
                 <tr key={p.id} className="hover:bg-muted/30">
                   <td className="px-5 py-3">
                     <div className="font-medium">{p.name}</div>
@@ -102,6 +114,9 @@ export default function PartiesPage({ type }: Props) {
                     {p.phone && <div className="flex items-center gap-1.5 mt-0.5"><Phone className="h-3 w-3" /> {p.phone}</div>}
                   </td>
                   <td className="px-5 py-3 hidden lg:table-cell text-muted-foreground">{p.address}</td>
+                  <td className="px-5 py-3 text-right">
+                    {bal > 0 ? <span className={`font-semibold ${isClient ? "text-warning" : "text-destructive"}`}>{xof(bal)}</span> : <span className="text-xs text-muted-foreground">—</span>}
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
@@ -113,7 +128,8 @@ export default function PartiesPage({ type }: Props) {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

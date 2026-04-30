@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useStore, upsertProduct, deleteProduct } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -6,11 +6,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag, Upload, ImageIcon, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag, Upload, ImageIcon, X, FileSpreadsheet, Download, FileDown, ChevronDown } from "lucide-react";
 import { xof } from "@/lib/format";
 import { generateSku } from "@/lib/sku";
+import { exportProductsXlsx, downloadTemplateXlsx, parseProductsXlsx, importProductsXlsx, type ImportRow, type ImportResult } from "@/lib/excel";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -22,6 +24,42 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [uploading, setUploading] = useState(false);
+
+  // Import Excel
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importDlg, setImportDlg] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [previewRows, setPreviewRows] = useState<ImportRow[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  const onPickXlsx = async (file?: File) => {
+    if (!file) return;
+    try {
+      const rows = await parseProductsXlsx(file);
+      if (rows.length === 0) return toast.error("Fichier vide ou format invalide");
+      setPreviewRows(rows);
+      setImportResult(null);
+      setImportDlg(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Lecture Excel impossible");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const runImport = async () => {
+    setImporting(true);
+    try {
+      const res = await importProductsXlsx(previewRows, s.products);
+      setImportResult(res);
+      const ok = res.created + res.updated;
+      toast.success(`${ok} article(s) importé(s) · ${res.errors.length} erreur(s)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Échec de l'import");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleUpload = async (file: File) => {
     if (!file) return;
@@ -98,7 +136,29 @@ export default function ProductsPage() {
       <PageHeader
         title="Catalogue produits"
         subtitle={`${list.length} article${list.length > 1 ? "s" : ""} · Valeur stock ${xof(valeurStock)} · Valeur vente ${xof(valeurVente)}`}
-        action={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>}
+        action={
+          <div className="flex gap-2">
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => onPickXlsx(e.target.files?.[0])} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2"><FileSpreadsheet className="h-4 w-4" /> Excel <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> Importer un fichier .xlsx
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportProductsXlsx(s.products)}>
+                  <Download className="h-4 w-4 mr-2" /> Exporter le catalogue
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={downloadTemplateXlsx}>
+                  <FileDown className="h-4 w-4 mr-2" /> Télécharger le modèle
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Nouvel article</Button>
+          </div>
+        }
       />
 
       <div className="mb-4 flex flex-col sm:flex-row gap-2">
@@ -275,6 +335,64 @@ export default function ProductsPage() {
               <Button type="submit">{editing ? "Enregistrer" : "Créer"}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog import Excel */}
+      <Dialog open={importDlg} onOpenChange={(v) => { setImportDlg(v); if (!v) { setPreviewRows([]); setImportResult(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Importer le catalogue depuis Excel</DialogTitle>
+            <DialogDescription>{previewRows.length} ligne(s) détectée(s). Les articles dont le SKU existe déjà seront mis à jour.</DialogDescription>
+          </DialogHeader>
+          {importResult ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Créés</div><div className="text-2xl font-bold text-success">{importResult.created}</div></div>
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Mis à jour</div><div className="text-2xl font-bold text-primary">{importResult.updated}</div></div>
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Erreurs</div><div className="text-2xl font-bold text-destructive">{importResult.errors.length}</div></div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="border rounded-md max-h-48 overflow-y-auto text-xs">
+                  {importResult.errors.map((e, i) => (
+                    <div key={i} className="px-3 py-1.5 border-b border-border last:border-0"><span className="font-mono">L{e.row}</span> · {e.message}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="border border-border rounded-md max-h-96 overflow-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 sticky top-0">
+                  <tr>
+                    <th className="text-left px-2 py-1.5 font-medium">SKU</th>
+                    <th className="text-left px-2 py-1.5 font-medium">Nom</th>
+                    <th className="text-left px-2 py-1.5 font-medium">Cat.</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Achat</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Vente</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Stock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {previewRows.slice(0, 200).map((r, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1 font-mono text-muted-foreground">{r.sku || <span className="italic">auto</span>}</td>
+                      <td className="px-2 py-1 font-medium">{r.name || <span className="text-destructive">(vide)</span>}</td>
+                      <td className="px-2 py-1 text-muted-foreground">{r.category}</td>
+                      <td className="px-2 py-1 text-right">{xof(r.costHT)}</td>
+                      <td className="px-2 py-1 text-right">{xof(r.priceHT)}</td>
+                      <td className="px-2 py-1 text-right">{r.stock}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {previewRows.length > 200 && <div className="text-center text-xs text-muted-foreground p-2">… {previewRows.length - 200} ligne(s) supplémentaire(s)</div>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDlg(false)}>Fermer</Button>
+            {!importResult && <Button onClick={runImport} disabled={importing}>{importing ? "Import en cours…" : `Importer ${previewRows.length} article(s)`}</Button>}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

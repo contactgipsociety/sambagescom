@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { usePosSessions, deleteSession, reopenSession, PAYMENT_LABELS, type PaymentMethod } from "@/lib/pos";
+import { usePosSessions, deleteSession, reopenSession } from "@/lib/pos";
+import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,26 @@ import { toast } from "sonner";
 export default function POSAnalysis() {
   const s = useStore();
   const sessions = usePosSessions();
+  const methods = usePaymentMethods();
   const [selected, setSelected] = useState<string | null>(null);
+
+  // Codes connus dans la base + ceux trouvés sur les docs (sécurité)
+  const allMethodCodes = useMemo(() => {
+    const set = new Set<string>(methods.map((m) => m.code));
+    s.documents.forEach((d) => { if (d.paymentMethod) set.add(d.paymentMethod); });
+    return Array.from(set);
+  }, [methods, s.documents]);
 
   const docTotal = (d: typeof s.documents[number]) =>
     d.lines.reduce((sum, l) => sum + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
+
+  const cashCodes = useMemo(() => {
+    const set = new Set(methods.filter((m) => m.kind === "cash").map((m) => m.code));
+    if (set.size === 0) set.add("especes");
+    return set;
+  }, [methods]);
+  const sumCash = (byMethod: Record<string, number>) =>
+    Object.entries(byMethod).filter(([k]) => cashCodes.has(k)).reduce((s, [, v]) => s + v, 0);
 
   const stats = (sessionId: string) => {
     const docs = s.documents.filter((d) => d.posSessionId === sessionId && d.status === "payee");
@@ -36,15 +53,15 @@ export default function POSAnalysis() {
     const totalTickets = sessions.reduce((sum, sess) => sum + stats(sess.id).count, 0);
     const totalEcart = closed.reduce((sum, sess) => {
       const { byMethod } = stats(sess.id);
-      const expected = sess.openingBalance + (byMethod.especes ?? 0);
+      const expected = sess.openingBalance + sumCash(byMethod);
       return sum + ((sess.closingBalanceCounted ?? expected) - expected);
     }, 0);
     return { totalRevenue, totalTickets, totalEcart, sessionsCount: sessions.length };
-  }, [sessions, s.documents]);
+  }, [sessions, s.documents, cashCodes]);
 
   const detail = selected ? sessions.find((s) => s.id === selected) : null;
   const detailStats = detail ? stats(detail.id) : null;
-  const expectedCash = detail ? detail.openingBalance + (detailStats!.byMethod.especes ?? 0) : 0;
+  const expectedCash = detail ? detail.openingBalance + sumCash(detailStats!.byMethod) : 0;
   const ecart = detail && detail.closingBalanceCounted != null ? detail.closingBalanceCounted - expectedCash : null;
 
   // Top produits sur toutes sessions
@@ -105,7 +122,7 @@ export default function POSAnalysis() {
                 )}
                 {sessions.map((sess) => {
                   const st = stats(sess.id);
-                  const exp = sess.openingBalance + (st.byMethod.especes ?? 0);
+                  const exp = sess.openingBalance + sumCash(st.byMethod);
                   const ec = sess.closingBalanceCounted != null ? sess.closingBalanceCounted - exp : null;
                   return (
                     <TableRow key={sess.id} onClick={() => setSelected(sess.id)} className="cursor-pointer">
@@ -162,7 +179,7 @@ export default function POSAnalysis() {
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trésorerie</h4>
                   <div className="rounded-lg border border-border p-3 space-y-1.5 text-sm">
                     <Row label="Solde d'ouverture" value={xof(detail.openingBalance)} />
-                    <Row label="Encaissements espèces" value={xof(detailStats.byMethod.especes ?? 0)} />
+                    <Row label="Encaissements espèces" value={xof(sumCash(detailStats.byMethod))} />
                     <Row label="Espèces théoriques" value={xof(expectedCash)} bold />
                     <Row label="Espèces comptées" value={detail.closingBalanceCounted != null ? xof(detail.closingBalanceCounted) : "—"} />
                     {ecart != null && (
@@ -179,13 +196,13 @@ export default function POSAnalysis() {
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Par mode de paiement</h4>
                   <div className="rounded-lg border border-border p-3 space-y-1.5 text-sm">
-                    {Object.keys(PAYMENT_LABELS).map((m) => {
+                    {allMethodCodes.map((m) => {
                       const amt = detailStats.byMethod[m] ?? 0;
                       if (amt === 0) return null;
                       const pct = detailStats.total > 0 ? (amt / detailStats.total) * 100 : 0;
                       return (
                         <div key={m} className="space-y-1">
-                          <div className="flex justify-between"><span>{PAYMENT_LABELS[m as PaymentMethod]}</span><span className="font-medium">{xof(amt)} <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span></span></div>
+                          <div className="flex justify-between"><span>{getPaymentLabel(m)}</span><span className="font-medium">{xof(amt)} <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span></span></div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${pct}%` }} /></div>
                         </div>
                       );
@@ -205,7 +222,7 @@ export default function POSAnalysis() {
                         <TableRow key={d.id}>
                           <TableCell className="font-mono text-xs">{d.number}</TableCell>
                           <TableCell className="text-xs">{new Date(d.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                          <TableCell><Badge variant="outline" className="text-xs">{PAYMENT_LABELS[(d.paymentMethod ?? "especes") as PaymentMethod]}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{getPaymentLabel(d.paymentMethod ?? "especes")}</Badge></TableCell>
                           <TableCell className="text-right font-semibold">{xof(docTotal(d))}</TableCell>
                         </TableRow>
                       ))}

@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore, upsertDocument, nextDocNumber } from "@/lib/store";
-import { useCurrentSession, openSession, closeSession, PAYMENT_LABELS, type PaymentMethod } from "@/lib/pos";
+import { useCurrentSession, openSession, closeSession } from "@/lib/pos";
+import { useActivePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +25,21 @@ interface CartItem extends InvoiceLine { stock: number; }
 export default function POS() {
   const s = useStore();
   const session = useCurrentSession();
+  const methods = useActivePaymentMethods();
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("__all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [partyId, setPartyId] = useState<string>("__none");
   const [paid, setPaid] = useState<number>(0);
-  const [payMethod, setPayMethod] = useState<PaymentMethod>("especes");
+  const [payMethod, setPayMethod] = useState<string>("especes");
+
+  // Init payMethod sur le 1er moyen actif dispo
+  useEffect(() => {
+    if (methods.length > 0 && !methods.some((m) => m.code === payMethod)) {
+      setPayMethod(methods[0].code);
+    }
+  }, [methods, payMethod]);
 
   // Dialogs
   const [openDlg, setOpenDlg] = useState(false);
@@ -57,7 +66,7 @@ export default function POS() {
 
   // Statistiques de la session courante
   const sessionStats = useMemo(() => {
-    if (!session) return { count: 0, total: 0, byMethod: {} as Record<string, number>, especes: 0 };
+    if (!session) return { count: 0, total: 0, byMethod: {} as Record<string, number>, cashLike: 0 };
     const docs = s.documents.filter((d) => d.posSessionId === session.id && d.status === "payee");
     const total = docs.reduce((sum, d) => sum + d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0), 0);
     const byMethod: Record<string, number> = {};
@@ -66,10 +75,16 @@ export default function POS() {
       const t = d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
       byMethod[m] = (byMethod[m] ?? 0) + t;
     });
-    return { count: docs.length, total, byMethod, especes: byMethod.especes ?? 0 };
-  }, [s.documents, session]);
+    // Somme des moyens de type "cash" (espèces et assimilés)
+    const cashCodes = new Set(methods.filter((m) => m.kind === "cash").map((m) => m.code));
+    if (cashCodes.size === 0) cashCodes.add("especes");
+    const cashLike = Object.entries(byMethod)
+      .filter(([code]) => cashCodes.has(code))
+      .reduce((sum, [, v]) => sum + v, 0);
+    return { count: docs.length, total, byMethod, cashLike };
+  }, [s.documents, session, methods]);
 
-  const expectedCash = session ? session.openingBalance + (sessionStats.especes ?? 0) : 0;
+  const expectedCash = session ? session.openingBalance + (sessionStats.cashLike ?? 0) : 0;
 
   const addToCart = (productId: string) => {
     const p = s.products.find((x) => x.id === productId);
@@ -153,7 +168,7 @@ export default function POS() {
     if (mode === "ticket") printTicket(doc, party);
     else printInvoice(doc, party);
 
-    toast.success(`Vente ${number} validée — ${PAYMENT_LABELS[payMethod]}`);
+    toast.success(`Vente ${number} validée — ${getPaymentLabel(payMethod)}`);
     setCart([]); setPaid(0);
   };
 
@@ -224,6 +239,29 @@ export default function POS() {
         <KpiCard label="Solde initial" value={xof(session.openingBalance)} icon={LockOpen} />
         <KpiCard label="Espèces théoriques" value={xof(expectedCash)} icon={Wallet} />
       </div>
+
+      {/* Paiements du jour par catégorie */}
+      {sessionStats.count > 0 && (
+        <div className="bg-card border border-border rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Paiements reçus aujourd'hui</h3>
+            <span className="text-xs text-muted-foreground">{sessionStats.count} ticket(s)</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            {methods.map((m) => {
+              const amt = sessionStats.byMethod[m.code] ?? 0;
+              const pct = sessionStats.total > 0 ? (amt / sessionStats.total) * 100 : 0;
+              return (
+                <div key={m.code} className={`rounded-md border p-2 ${amt > 0 ? "border-primary/30 bg-primary-soft/30" : "border-border bg-muted/20"}`}>
+                  <div className="text-[11px] text-muted-foreground truncate">{m.label}</div>
+                  <div className={`text-sm font-bold ${amt > 0 ? "text-primary" : "text-muted-foreground"}`}>{xof(amt)}</div>
+                  {amt > 0 && <div className="text-[10px] text-muted-foreground">{pct.toFixed(0)}% du total</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4">
         {/* Catalogue */}
@@ -305,10 +343,10 @@ export default function POS() {
                   {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={payMethod} onValueChange={(v) => setPayMethod(v as PaymentMethod)}>
+              <Select value={payMethod} onValueChange={setPayMethod}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(PAYMENT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  {methods.map((m) => <SelectItem key={m.code} value={m.code}>{m.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -352,7 +390,7 @@ export default function POS() {
           <div className="space-y-3">
             <div className="rounded-lg bg-muted/40 border border-border p-3 space-y-1.5 text-sm">
               <Row label="Solde d'ouverture" value={xof(session.openingBalance)} />
-              <Row label="Encaissements espèces" value={xof(sessionStats.especes)} />
+              <Row label="Encaissements espèces" value={xof(sessionStats.cashLike)} />
               <Row label="Espèces théoriques" value={xof(expectedCash)} bold />
               <div className="pt-1.5 border-t border-border text-xs text-muted-foreground">
                 Total ventes session : <span className="font-medium text-foreground">{xof(sessionStats.total)}</span> · {sessionStats.count} ticket(s)

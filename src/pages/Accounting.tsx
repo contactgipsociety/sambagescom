@@ -17,6 +17,7 @@ import { xof, dateFr } from "@/lib/format";
 import { docTotals } from "@/lib/format";
 import type { AccountingEntry, EntryType } from "@/lib/types";
 import { useCompany, buildFiscalYear, fiscalYearOf } from "@/lib/company";
+import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 
 export default function Accounting() {
   const { entries, documents, products } = useStore();
@@ -173,8 +174,14 @@ export default function Accounting() {
         <TabsList>
           <TabsTrigger value="resultat"><FileText className="h-4 w-4 mr-2" />Compte de résultat</TabsTrigger>
           <TabsTrigger value="bilan"><Scale className="h-4 w-4 mr-2" />Bilan</TabsTrigger>
+          <TabsTrigger value="encaissements">Encaissements</TabsTrigger>
           <TabsTrigger value="ecritures">Écritures ({yearEntries.length})</TabsTrigger>
         </TabsList>
+
+        {/* ============== ENCAISSEMENTS PAR MOYEN ============== */}
+        <TabsContent value="encaissements" className="space-y-4">
+          <EncaissementsParMoyen docs={yearDocs} />
+        </TabsContent>
 
         {/* ============== COMPTE DE RÉSULTAT ============== */}
         <TabsContent value="resultat" className="space-y-4">
@@ -397,5 +404,45 @@ function EntryDialog({ editing, onSave }: { editing: AccountingEntry | null; onS
       </div>
       <DialogFooter><Button onClick={submit}>Enregistrer</Button></DialogFooter>
     </DialogContent>
+  );
+}
+
+function EncaissementsParMoyen({ docs }: { docs: any[] }) {
+  const methods = usePaymentMethods();
+  const paid = docs.filter((d) => d.status === "payee" && d.kind === "facture");
+  const totalsByMethod: Record<string, number> = {};
+  let grand = 0;
+  for (const d of paid) {
+    const ttc = d.lines.reduce((s: number, l: any) => s + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
+    const code = d.paymentMethod ?? "especes";
+    totalsByMethod[code] = (totalsByMethod[code] ?? 0) + ttc;
+    grand += ttc;
+  }
+  const allCodes = Array.from(new Set([...methods.map((m: any) => m.code), ...Object.keys(totalsByMethod)]));
+  return (
+    <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold">Encaissements par moyen de paiement (exercice)</h3>
+        <span className="text-sm text-muted-foreground">Total : <strong className="text-primary">{xof(grand)}</strong></span>
+      </div>
+      <div className="space-y-2">
+        {allCodes.map((code) => {
+          const amt = totalsByMethod[code] ?? 0;
+          if (amt === 0) return null;
+          const pct = grand > 0 ? (amt / grand) * 100 : 0;
+          const m = methods.find((x: any) => x.code === code);
+          return (
+            <div key={code} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>{getPaymentLabel(code)} {m?.accountCode && <span className="text-xs text-muted-foreground font-mono">· {m.accountCode}</span>}</span>
+                <span className="font-medium">{xof(amt)} <span className="text-xs text-muted-foreground">({pct.toFixed(1)}%)</span></span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${pct}%` }} /></div>
+            </div>
+          );
+        })}
+        {grand === 0 && <p className="text-sm text-muted-foreground text-center py-6">Aucun encaissement sur cet exercice</p>}
+      </div>
+    </div>
   );
 }

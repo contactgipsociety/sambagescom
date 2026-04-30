@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore, upsertDocument, deleteDocument, setDocStatus, nextDocNumber } from "@/lib/store";
+import { useActivePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText } from "lucide-react";
 import { xof, dateFr, docTotals, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
@@ -28,6 +30,7 @@ const config = {
 
 export default function DocumentsPage({ kind }: Props) {
   const s = useStore();
+  const methods = useActivePaymentMethods();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<InvoiceDoc | null>(null);
 
@@ -35,6 +38,7 @@ export default function DocumentsPage({ kind }: Props) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
 
   const cfg = config[kind];
@@ -47,6 +51,7 @@ export default function DocumentsPage({ kind }: Props) {
     setDate(new Date().toISOString().slice(0, 10));
     setDueDate("");
     setNotes("");
+    setPaymentMethod("");
     setLines([emptyLine()]);
     setOpen(true);
   };
@@ -57,6 +62,7 @@ export default function DocumentsPage({ kind }: Props) {
     setDate(d.date);
     setDueDate(d.dueDate ?? "");
     setNotes(d.notes ?? "");
+    setPaymentMethod(d.paymentMethod ?? "");
     setLines(d.lines.length ? d.lines : [emptyLine()]);
     setOpen(true);
   };
@@ -91,6 +97,7 @@ export default function DocumentsPage({ kind }: Props) {
       lines: lines.filter((l) => l.description.trim()),
       status: editing?.status ?? "brouillon",
       notes,
+      paymentMethod: paymentMethod || undefined,
     });
     toast.success(editing ? "Document modifié" : `${cfg.title.split(" ")[0]} créé(e)`);
     setOpen(false);
@@ -129,6 +136,7 @@ export default function DocumentsPage({ kind }: Props) {
                 <th className="text-left px-5 py-3 font-medium">{cfg.partyLabel}</th>
                 <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Date</th>
                 <th className="text-right px-5 py-3 font-medium">Total TTC</th>
+                <th className="text-left px-5 py-3 font-medium hidden lg:table-cell">Paiement</th>
                 <th className="text-left px-5 py-3 font-medium">Statut</th>
                 <th className="w-12"></th>
               </tr>
@@ -143,6 +151,9 @@ export default function DocumentsPage({ kind }: Props) {
                     <td className="px-5 py-3 font-medium">{party?.name ?? "—"}</td>
                     <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{dateFr(d.date)}</td>
                     <td className="px-5 py-3 text-right font-medium">{xof(t.ttc)}</td>
+                    <td className="px-5 py-3 hidden lg:table-cell">
+                      {d.paymentMethod ? <Badge variant="outline" className="text-xs">{getPaymentLabel(d.paymentMethod)}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
                     <td className="px-5 py-3"><StatusBadge status={d.status} /></td>
                     <td className="px-5 py-3">
                       <DropdownMenu>
@@ -199,6 +210,22 @@ export default function DocumentsPage({ kind }: Props) {
                 <Label>Échéance</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
+            </div>
+
+            <div>
+              <Label>Moyen de paiement {kind === "achat" ? "(fournisseur)" : "(client)"}</Label>
+              <Select value={paymentMethod || "__none"} onValueChange={(v) => setPaymentMethod(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Non renseigné" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">— Non renseigné —</SelectItem>
+                  {methods.map((m) => <SelectItem key={m.code} value={m.code}>{m.label}{m.isCredit && " (à régler)"}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {kind === "achat"
+                  ? "Choisissez « Crédit fournisseur » pour un achat à crédit (génère une dette fournisseur)."
+                  : "Choisissez « Compte client » pour une vente à crédit (génère une créance client)."}
+              </p>
             </div>
 
             <div>

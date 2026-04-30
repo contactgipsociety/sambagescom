@@ -16,12 +16,16 @@ export interface PosSession {
   createdAt: string;
 }
 
-export type PaymentMethod = "especes" | "mobile" | "carte" | "cheque" | "virement";
-
-export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+// @deprecated — utiliser src/lib/payments.ts (table payment_methods)
+export type PaymentMethod = string;
+export const PAYMENT_LABELS: Record<string, string> = {
   especes: "Espèces",
-  mobile: "Mobile Money",
+  orange_money: "Orange Money",
+  wave: "Wave",
   carte: "Carte bancaire",
+  credit_fournisseur: "Crédit fournisseur",
+  compte_client: "Compte client",
+  mobile: "Mobile Money",
   cheque: "Chèque",
   virement: "Virement",
 };
