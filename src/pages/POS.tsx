@@ -320,10 +320,10 @@ export default function POS() {
                   {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={payMethod} onValueChange={(v) => setPayMethod(v as PaymentMethod)}>
+              <Select value={payMethod} onValueChange={setPayMethod}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(PAYMENT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  {methods.map((m) => <SelectItem key={m.code} value={m.code}>{m.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
