@@ -19,6 +19,13 @@ export default function PartiesPage({ type }: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Party | null>(null);
 
+  // Solde dû par tiers : factures (vente) ou achats avec statut "envoyee" (= non payés)
+  const balanceOf = (partyId: string) => {
+    return s.documents
+      .filter((d) => d.partyId === partyId && d.status === "envoyee" && (type === "client" ? d.kind === "facture" : d.kind === "achat"))
+      .reduce((sum, d) => sum + d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0), 0);
+  };
+
   const list = s.parties
     .filter((p) => p.type === type)
     .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()) || (p.email ?? "").toLowerCase().includes(q.toLowerCase()));
@@ -26,6 +33,7 @@ export default function PartiesPage({ type }: Props) {
   const isClient = type === "client";
   const Icon = isClient ? Users : Building2;
   const title = isClient ? "Clients" : "Fournisseurs";
+  const totalBalance = list.reduce((s, p) => s + balanceOf(p.id), 0);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Party) => { setEditing(p); setOpen(true); };
