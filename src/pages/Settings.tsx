@@ -323,3 +323,157 @@ export default function Settings() {
     </div>
   );
 }
+
+// ===================== Moyens de paiement =====================
+function PaymentMethodsCard() {
+  const methods = usePaymentMethods();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<PaymentMethodDef | null>(null);
+  const [form, setForm] = useState<{ code: string; label: string; kind: PaymentKind; isCredit: boolean; accountCode: string; isActive: boolean; sortOrder: number }>({
+    code: "", label: "", kind: "cash", isCredit: false, accountCode: "", isActive: true, sortOrder: 99,
+  });
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({ code: "", label: "", kind: "cash", isCredit: false, accountCode: "", isActive: true, sortOrder: (methods.at(-1)?.sortOrder ?? 0) + 1 });
+    setOpen(true);
+  };
+  const openEdit = (m: PaymentMethodDef) => {
+    setEditing(m);
+    setForm({ code: m.code, label: m.label, kind: m.kind, isCredit: m.isCredit, accountCode: m.accountCode ?? "", isActive: m.isActive, sortOrder: m.sortOrder });
+    setOpen(true);
+  };
+  const save = async () => {
+    if (!form.label.trim()) return toast.error("Libellé requis");
+    if (!editing && !form.code.trim()) return toast.error("Code requis");
+    try {
+      await upsertPaymentMethod({
+        id: editing?.id,
+        code: form.code || form.label,
+        label: form.label,
+        kind: form.kind,
+        isActive: form.isActive,
+        isCredit: form.isCredit,
+        sortOrder: form.sortOrder,
+        accountCode: form.accountCode || undefined,
+      });
+      toast.success(editing ? "Moyen modifié" : "Moyen ajouté");
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erreur");
+    }
+  };
+  const remove = async (m: PaymentMethodDef) => {
+    if (!confirm(`Supprimer « ${m.label} » ? Les ventes existantes garderont leur étiquette.`)) return;
+    await deletePaymentMethod(m.id);
+    toast.success("Supprimé");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />Moyens de paiement</CardTitle>
+            <CardDescription>Activez, créez ou désactivez les moyens disponibles sur le POS et les documents</CardDescription>
+          </div>
+          <Button size="sm" onClick={openNew} className="gap-2"><Plus className="h-4 w-4" />Ajouter</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="text-left px-4 py-2.5 font-medium">Libellé</th>
+                <th className="text-left px-4 py-2.5 font-medium">Code</th>
+                <th className="text-left px-4 py-2.5 font-medium">Type</th>
+                <th className="text-left px-4 py-2.5 font-medium">Compte</th>
+                <th className="text-center px-4 py-2.5 font-medium">Crédit</th>
+                <th className="text-center px-4 py-2.5 font-medium">Actif</th>
+                <th className="w-20"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {methods.length === 0 && (
+                <tr><td colSpan={7} className="text-center text-sm text-muted-foreground py-6">Aucun moyen de paiement</td></tr>
+              )}
+              {methods.map((m) => (
+                <tr key={m.id} className="hover:bg-muted/20">
+                  <td className="px-4 py-2 font-medium">{m.label}</td>
+                  <td className="px-4 py-2 text-xs text-muted-foreground font-mono">{m.code}</td>
+                  <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{PAYMENT_KIND_LABELS[m.kind]}</Badge></td>
+                  <td className="px-4 py-2 text-xs font-mono text-muted-foreground">{m.accountCode ?? "—"}</td>
+                  <td className="px-4 py-2 text-center">{m.isCredit ? <Badge className="text-xs bg-warning/15 text-warning border-warning/30">Oui</Badge> : <span className="text-xs text-muted-foreground">—</span>}</td>
+                  <td className="px-4 py-2 text-center">
+                    <Switch checked={m.isActive} onCheckedChange={(v) => togglePaymentMethod(m.id, v)} />
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="flex gap-1 justify-end">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(m)}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(m)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          💡 Le type <strong>Espèces</strong> est inclus dans le calcul du fond de caisse théorique.
+          Le drapeau <strong>Crédit</strong> identifie un règlement différé (compte client / crédit fournisseur).
+        </p>
+      </CardContent>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Modifier le moyen de paiement" : "Nouveau moyen de paiement"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Libellé *</Label>
+                <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="Ex: Free Money" />
+              </div>
+              <div>
+                <Label>Code *</Label>
+                <Input value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toLowerCase().replace(/\s+/g, "_") }))} disabled={!!editing} placeholder="free_money" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Catégorie</Label>
+                <Select value={form.kind} onValueChange={(v) => setForm((f) => ({ ...f, kind: v as PaymentKind }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PAYMENT_KIND_LABELS) as PaymentKind[]).map((k) => (
+                      <SelectItem key={k} value={k}>{PAYMENT_KIND_LABELS[k]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Compte SYSCOHADA</Label>
+                <Input value={form.accountCode} onChange={(e) => setForm((f) => ({ ...f, accountCode: e.target.value }))} placeholder="571 / 521 / 411…" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <Label className="cursor-pointer">Règlement à crédit</Label>
+                <p className="text-xs text-muted-foreground">Cochez pour les comptes clients / crédits fournisseur</p>
+              </div>
+              <Switch checked={form.isCredit} onCheckedChange={(v) => setForm((f) => ({ ...f, isCredit: v }))} />
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <Label className="cursor-pointer">Actif</Label>
+              <Switch checked={form.isActive} onCheckedChange={(v) => setForm((f) => ({ ...f, isActive: v }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+            <Button onClick={save}>{editing ? "Enregistrer" : "Créer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
