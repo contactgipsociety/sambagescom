@@ -213,6 +213,22 @@ export default function DocumentsPage({ kind }: Props) {
             </div>
 
             <div>
+              <Label>Moyen de paiement {kind === "achat" ? "(fournisseur)" : "(client)"}</Label>
+              <Select value={paymentMethod || "__none"} onValueChange={(v) => setPaymentMethod(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Non renseigné" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">— Non renseigné —</SelectItem>
+                  {methods.map((m) => <SelectItem key={m.code} value={m.code}>{m.label}{m.isCredit && " (à régler)"}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {kind === "achat"
+                  ? "Choisissez « Crédit fournisseur » pour un achat à crédit (génère une dette fournisseur)."
+                  : "Choisissez « Compte client » pour une vente à crédit (génère une créance client)."}
+              </p>
+            </div>
+
+            <div>
               <div className="flex items-center justify-between mb-2">
                 <Label>Lignes</Label>
                 <Button type="button" variant="outline" size="sm" onClick={() => setLines((ls) => [...ls, emptyLine()])}>
