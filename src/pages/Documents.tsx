@@ -51,6 +51,7 @@ export default function DocumentsPage({ kind }: Props) {
     setDate(new Date().toISOString().slice(0, 10));
     setDueDate("");
     setNotes("");
+    setPaymentMethod("");
     setLines([emptyLine()]);
     setOpen(true);
   };
@@ -61,6 +62,7 @@ export default function DocumentsPage({ kind }: Props) {
     setDate(d.date);
     setDueDate(d.dueDate ?? "");
     setNotes(d.notes ?? "");
+    setPaymentMethod(d.paymentMethod ?? "");
     setLines(d.lines.length ? d.lines : [emptyLine()]);
     setOpen(true);
   };
