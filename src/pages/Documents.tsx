@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore, upsertDocument, deleteDocument, setDocStatus, nextDocNumber } from "@/lib/store";
+import { useActivePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText } from "lucide-react";
 import { xof, dateFr, docTotals, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
