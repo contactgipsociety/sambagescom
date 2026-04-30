@@ -17,6 +17,7 @@ import { xof, dateFr } from "@/lib/format";
 import { docTotals } from "@/lib/format";
 import type { AccountingEntry, EntryType } from "@/lib/types";
 import { useCompany, buildFiscalYear, fiscalYearOf } from "@/lib/company";
+import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 
 export default function Accounting() {
   const { entries, documents, products } = useStore();
