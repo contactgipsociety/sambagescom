@@ -408,7 +408,6 @@ function EntryDialog({ editing, onSave }: { editing: AccountingEntry | null; onS
 }
 
 function EncaissementsParMoyen({ docs }: { docs: any[] }) {
-  const { usePaymentMethods, getPaymentLabel } = require("@/lib/payments");
   const methods = usePaymentMethods();
   const paid = docs.filter((d) => d.status === "payee" && d.kind === "facture");
   const totalsByMethod: Record<string, number> = {};
