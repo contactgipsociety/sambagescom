@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useStore, upsertProduct, deleteProduct } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -6,11 +6,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag, Upload, ImageIcon, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Tag, Upload, ImageIcon, X, FileSpreadsheet, Download, FileDown, ChevronDown } from "lucide-react";
 import { xof } from "@/lib/format";
 import { generateSku } from "@/lib/sku";
+import { exportProductsXlsx, downloadTemplateXlsx, parseProductsXlsx, importProductsXlsx, type ImportRow, type ImportResult } from "@/lib/excel";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
 
