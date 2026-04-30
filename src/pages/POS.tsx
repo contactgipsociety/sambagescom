@@ -367,7 +367,7 @@ export default function POS() {
           <div className="space-y-3">
             <div className="rounded-lg bg-muted/40 border border-border p-3 space-y-1.5 text-sm">
               <Row label="Solde d'ouverture" value={xof(session.openingBalance)} />
-              <Row label="Encaissements espèces" value={xof(sessionStats.especes)} />
+              <Row label="Encaissements espèces" value={xof(sessionStats.cashLike)} />
               <Row label="Espèces théoriques" value={xof(expectedCash)} bold />
               <div className="pt-1.5 border-t border-border text-xs text-muted-foreground">
                 Total ventes session : <span className="font-medium text-foreground">{xof(sessionStats.total)}</span> · {sessionStats.count} ticket(s)
