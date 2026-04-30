@@ -68,7 +68,7 @@ export default function PartiesPage({ type }: Props) {
     <div className="max-w-6xl mx-auto">
       <PageHeader
         title={title}
-        subtitle={`${list.length} ${type}${list.length > 1 ? "s" : ""}`}
+        subtitle={`${list.length} ${type}${list.length > 1 ? "s" : ""}${totalBalance > 0 ? ` · Solde dû total : ${xof(totalBalance)}` : ""}`}
         action={
           <Button onClick={openNew} className="gap-2">
             <Plus className="h-4 w-4" /> Nouveau {isClient ? "client" : "fournisseur"}
