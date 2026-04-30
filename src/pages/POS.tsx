@@ -66,7 +66,7 @@ export default function POS() {
 
   // Statistiques de la session courante
   const sessionStats = useMemo(() => {
-    if (!session) return { count: 0, total: 0, byMethod: {} as Record<string, number>, especes: 0 };
+    if (!session) return { count: 0, total: 0, byMethod: {} as Record<string, number>, cashLike: 0 };
     const docs = s.documents.filter((d) => d.posSessionId === session.id && d.status === "payee");
     const total = docs.reduce((sum, d) => sum + d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0), 0);
     const byMethod: Record<string, number> = {};
@@ -75,10 +75,16 @@ export default function POS() {
       const t = d.lines.reduce((ss, l) => ss + l.quantity * l.unitPriceHT * (1 + l.tvaRate / 100), 0);
       byMethod[m] = (byMethod[m] ?? 0) + t;
     });
-    return { count: docs.length, total, byMethod, especes: byMethod.especes ?? 0 };
-  }, [s.documents, session]);
+    // Somme des moyens de type "cash" (espèces et assimilés)
+    const cashCodes = new Set(methods.filter((m) => m.kind === "cash").map((m) => m.code));
+    if (cashCodes.size === 0) cashCodes.add("especes");
+    const cashLike = Object.entries(byMethod)
+      .filter(([code]) => cashCodes.has(code))
+      .reduce((sum, [, v]) => sum + v, 0);
+    return { count: docs.length, total, byMethod, cashLike };
+  }, [s.documents, session, methods]);
 
-  const expectedCash = session ? session.openingBalance + (sessionStats.especes ?? 0) : 0;
+  const expectedCash = session ? session.openingBalance + (sessionStats.cashLike ?? 0) : 0;
 
   const addToCart = (productId: string) => {
     const p = s.products.find((x) => x.id === productId);
