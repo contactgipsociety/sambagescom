@@ -25,13 +25,21 @@ interface CartItem extends InvoiceLine { stock: number; }
 export default function POS() {
   const s = useStore();
   const session = useCurrentSession();
+  const methods = useActivePaymentMethods();
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("__all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [partyId, setPartyId] = useState<string>("__none");
   const [paid, setPaid] = useState<number>(0);
-  const [payMethod, setPayMethod] = useState<PaymentMethod>("especes");
+  const [payMethod, setPayMethod] = useState<string>("especes");
+
+  // Init payMethod sur le 1er moyen actif dispo
+  useEffect(() => {
+    if (methods.length > 0 && !methods.some((m) => m.code === payMethod)) {
+      setPayMethod(methods[0].code);
+    }
+  }, [methods, payMethod]);
 
   // Dialogs
   const [openDlg, setOpenDlg] = useState(false);
