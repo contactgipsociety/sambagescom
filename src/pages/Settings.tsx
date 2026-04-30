@@ -8,14 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Building2, Upload, Save, AlertTriangle, Trash2, ImageIcon } from "lucide-react";
+import { Building2, Upload, Save, AlertTriangle, Trash2, ImageIcon, CreditCard, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useCompany, updateCompany, uploadLogo, type CompanySettings } from "@/lib/company";
 import { resetDatabase } from "@/lib/reset";
+import {
+  usePaymentMethods, upsertPaymentMethod, deletePaymentMethod, togglePaymentMethod,
+  PAYMENT_KIND_LABELS, type PaymentMethodDef, type PaymentKind,
+} from "@/lib/payments";
 
 const MONTHS = [
   "Janvier","Février","Mars","Avril","Mai","Juin",
