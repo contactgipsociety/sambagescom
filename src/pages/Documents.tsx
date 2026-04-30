@@ -97,6 +97,7 @@ export default function DocumentsPage({ kind }: Props) {
       lines: lines.filter((l) => l.description.trim()),
       status: editing?.status ?? "brouillon",
       notes,
+      paymentMethod: paymentMethod || undefined,
     });
     toast.success(editing ? "Document modifié" : `${cfg.title.split(" ")[0]} créé(e)`);
     setOpen(false);
