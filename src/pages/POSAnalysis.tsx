@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { usePosSessions, deleteSession, reopenSession, PAYMENT_LABELS, type PaymentMethod } from "@/lib/pos";
+import { usePosSessions, deleteSession, reopenSession } from "@/lib/pos";
+import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
