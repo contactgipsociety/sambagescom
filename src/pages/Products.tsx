@@ -337,6 +337,64 @@ export default function ProductsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog import Excel */}
+      <Dialog open={importDlg} onOpenChange={(v) => { setImportDlg(v); if (!v) { setPreviewRows([]); setImportResult(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Importer le catalogue depuis Excel</DialogTitle>
+            <DialogDescription>{previewRows.length} ligne(s) détectée(s). Les articles dont le SKU existe déjà seront mis à jour.</DialogDescription>
+          </DialogHeader>
+          {importResult ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Créés</div><div className="text-2xl font-bold text-success">{importResult.created}</div></div>
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Mis à jour</div><div className="text-2xl font-bold text-primary">{importResult.updated}</div></div>
+                <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Erreurs</div><div className="text-2xl font-bold text-destructive">{importResult.errors.length}</div></div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="border rounded-md max-h-48 overflow-y-auto text-xs">
+                  {importResult.errors.map((e, i) => (
+                    <div key={i} className="px-3 py-1.5 border-b border-border last:border-0"><span className="font-mono">L{e.row}</span> · {e.message}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="border border-border rounded-md max-h-96 overflow-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 sticky top-0">
+                  <tr>
+                    <th className="text-left px-2 py-1.5 font-medium">SKU</th>
+                    <th className="text-left px-2 py-1.5 font-medium">Nom</th>
+                    <th className="text-left px-2 py-1.5 font-medium">Cat.</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Achat</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Vente</th>
+                    <th className="text-right px-2 py-1.5 font-medium">Stock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {previewRows.slice(0, 200).map((r, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1 font-mono text-muted-foreground">{r.sku || <span className="italic">auto</span>}</td>
+                      <td className="px-2 py-1 font-medium">{r.name || <span className="text-destructive">(vide)</span>}</td>
+                      <td className="px-2 py-1 text-muted-foreground">{r.category}</td>
+                      <td className="px-2 py-1 text-right">{xof(r.costHT)}</td>
+                      <td className="px-2 py-1 text-right">{xof(r.priceHT)}</td>
+                      <td className="px-2 py-1 text-right">{r.stock}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {previewRows.length > 200 && <div className="text-center text-xs text-muted-foreground p-2">… {previewRows.length - 200} ligne(s) supplémentaire(s)</div>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDlg(false)}>Fermer</Button>
+            {!importResult && <Button onClick={runImport} disabled={importing}>{importing ? "Import en cours…" : `Importer ${previewRows.length} article(s)`}</Button>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
