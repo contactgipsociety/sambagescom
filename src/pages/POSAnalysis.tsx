@@ -188,13 +188,13 @@ export default function POSAnalysis() {
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Par mode de paiement</h4>
                   <div className="rounded-lg border border-border p-3 space-y-1.5 text-sm">
-                    {Object.keys(PAYMENT_LABELS).map((m) => {
+                    {allMethodCodes.map((m) => {
                       const amt = detailStats.byMethod[m] ?? 0;
                       if (amt === 0) return null;
                       const pct = detailStats.total > 0 ? (amt / detailStats.total) * 100 : 0;
                       return (
                         <div key={m} className="space-y-1">
-                          <div className="flex justify-between"><span>{PAYMENT_LABELS[m as PaymentMethod]}</span><span className="font-medium">{xof(amt)} <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span></span></div>
+                          <div className="flex justify-between"><span>{getPaymentLabel(m)}</span><span className="font-medium">{xof(amt)} <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span></span></div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${pct}%` }} /></div>
                         </div>
                       );
