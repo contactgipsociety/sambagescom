@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, Users, Building2, Mail, Phone } from "lucide-react";
+import { xof } from "@/lib/format";
 import type { Party, PartyType } from "@/lib/types";
 import { toast } from "sonner";
 
