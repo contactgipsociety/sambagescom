@@ -124,17 +124,25 @@ export default function Accounting() {
   // ====== Bilan ======
   // Actif
   const immobilisations = sumByGroup("Immobilisations corporelles");
-  const tresorerieActif = sumByGroup("Trésorerie - Actif");
+  // Trésorerie = saisie manuelle (apports initiaux, etc.) + flux auto issus de la boutique
+  const tresorerieManuelle = sumByGroup("Trésorerie - Actif");
+  const tresorerieActif = tresorerieManuelle + tresorerieAuto;
   const totalActif = immobilisations + stockValue + creancesClients + tresorerieActif;
 
   // Passif
-  const capitauxPropres = sumByGroup("Capitaux propres") + resultatNet;
+  const capitauxPropresManuels = sumByGroup("Capitaux propres");
   const dettesFinancieres = sumByGroup("Dettes financières");
   const dettesExpl = sumByGroup("Dettes d'exploitation") + dettesFour;
   const dettesFiscales = sumByGroup("Dettes fiscales") + Math.max(0, tvaCollectee - tvaDeductible);
-  const totalPassif = capitauxPropres + dettesFinancieres + dettesExpl + dettesFiscales;
 
-  const ecartBilan = totalActif - totalPassif;
+  // ===== ÉQUILIBRE AUTOMATIQUE =====
+  // Le report à nouveau / capital implicite équilibre le bilan automatiquement
+  // pour les utilisateurs qui n'ont pas saisi de capitaux propres.
+  const passifSansCapitaux = dettesFinancieres + dettesExpl + dettesFiscales;
+  const reportAuto = totalActif - passifSansCapitaux - capitauxPropresManuels - resultatNet;
+  const capitauxPropres = capitauxPropresManuels + resultatNet + reportAuto;
+  const totalPassif = capitauxPropres + passifSansCapitaux;
+  const ecartBilan = totalActif - totalPassif; // ≈ 0 par construction
 
   const years = useMemo(() => {
     const set = new Set<number>([company.currentFiscalYear]);
