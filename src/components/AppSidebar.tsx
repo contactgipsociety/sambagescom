@@ -26,6 +26,7 @@ const operations = [
 const repertoire = [
   { title: "Clients", url: "/clients", icon: Users },
   { title: "Fournisseurs", url: "/fournisseurs", icon: Building2 },
+  { title: "Comptes tiers", url: "/comptes-tiers", icon: BarChart3 },
 ];
 const catalogue = [
   { title: "Catalogue", url: "/catalogue", icon: Tag },

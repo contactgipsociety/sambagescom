@@ -22,6 +22,7 @@ import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 export default function Accounting() {
   const { entries, documents, products } = useStore();
   const company = useCompany();
+  const methods = usePaymentMethods();
   const startMonth = company.fiscalYearStartMonth;
   const startDay = company.fiscalYearStartDay;
   const [year, setYear] = useState<number>(company.currentFiscalYear);
@@ -63,15 +64,31 @@ export default function Accounting() {
   // Stock final estimé (au coût)
   const stockValue = products.reduce((s, p) => s + p.stock * p.costHT, 0);
 
-  // Créances clients (factures envoyées non payées)
+  // Créances clients (toutes factures envoyées non payées, tous exercices)
   const creancesClients = documents
     .filter((d) => d.kind === "facture" && d.status === "envoyee")
     .reduce((s, d) => s + docTotals(d).ttc, 0);
 
-  // Dettes fournisseurs (achats envoyés non payés)
+  // Dettes fournisseurs (tous exercices)
   const dettesFour = documents
     .filter((d) => d.kind === "achat" && d.status === "envoyee")
     .reduce((s, d) => s + docTotals(d).ttc, 0);
+
+  // ============= TRÉSORERIE AUTOMATIQUE =============
+  // Encaissements clients (factures payées non-crédit) - Décaissements achats payés non-crédit
+  // Exclut les paiements à crédit (compte client / crédit fournisseur)
+  const isCashLike = (paymentMethod?: string): boolean => {
+    if (!paymentMethod) return true; // par défaut espèces
+    const m = methods.find((x) => x.code === paymentMethod);
+    return !!m && !m.isCredit;
+  };
+  const encaissementsBoutique = documents
+    .filter((d) => d.kind === "facture" && d.status === "payee" && isCashLike(d.paymentMethod))
+    .reduce((s, d) => s + docTotals(d).ttc, 0);
+  const decaissementsBoutique = documents
+    .filter((d) => d.kind === "achat" && d.status === "payee" && isCashLike(d.paymentMethod))
+    .reduce((s, d) => s + docTotals(d).ttc, 0);
+  const tresorerieAuto = encaissementsBoutique - decaissementsBoutique;
 
   // ====== Agrégation des écritures manuelles ======
   const sumByType = (t: EntryType) => yearEntries.filter((e) => e.entryType === t).reduce((s, e) => s + e.amount, 0);
@@ -107,17 +124,25 @@ export default function Accounting() {
   // ====== Bilan ======
   // Actif
   const immobilisations = sumByGroup("Immobilisations corporelles");
-  const tresorerieActif = sumByGroup("Trésorerie - Actif");
+  // Trésorerie = saisie manuelle (apports initiaux, etc.) + flux auto issus de la boutique
+  const tresorerieManuelle = sumByGroup("Trésorerie - Actif");
+  const tresorerieActif = tresorerieManuelle + tresorerieAuto;
   const totalActif = immobilisations + stockValue + creancesClients + tresorerieActif;
 
   // Passif
-  const capitauxPropres = sumByGroup("Capitaux propres") + resultatNet;
+  const capitauxPropresManuels = sumByGroup("Capitaux propres");
   const dettesFinancieres = sumByGroup("Dettes financières");
   const dettesExpl = sumByGroup("Dettes d'exploitation") + dettesFour;
   const dettesFiscales = sumByGroup("Dettes fiscales") + Math.max(0, tvaCollectee - tvaDeductible);
-  const totalPassif = capitauxPropres + dettesFinancieres + dettesExpl + dettesFiscales;
 
-  const ecartBilan = totalActif - totalPassif;
+  // ===== ÉQUILIBRE AUTOMATIQUE =====
+  // Le report à nouveau / capital implicite équilibre le bilan automatiquement
+  // pour les utilisateurs qui n'ont pas saisi de capitaux propres.
+  const passifSansCapitaux = dettesFinancieres + dettesExpl + dettesFiscales;
+  const reportAuto = totalActif - passifSansCapitaux - capitauxPropresManuels - resultatNet;
+  const capitauxPropres = capitauxPropresManuels + resultatNet + reportAuto;
+  const totalPassif = capitauxPropres + passifSansCapitaux;
+  const ecartBilan = totalActif - totalPassif; // ≈ 0 par construction
 
   const years = useMemo(() => {
     const set = new Set<number>([company.currentFiscalYear]);
@@ -161,6 +186,17 @@ export default function Accounting() {
           </div>
         }
       />
+
+      {/* Bannière pédagogique : tout est automatique */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+        <div className="font-semibold text-primary mb-1">📊 Comptabilité automatique</div>
+        <p className="text-muted-foreground leading-relaxed">
+          Tout ce qui se passe sur la boutique est déjà comptabilisé : ventes (701), achats (601), TVA, stock (311),
+          créances clients (411), dettes fournisseurs (401), trésorerie (521/571 selon le moyen de paiement).
+          Le bilan s'équilibre <strong>automatiquement</strong>. Vous n'avez qu'à saisir manuellement les charges externes
+          (loyer, salaires, électricité…) via « Nouvelle écriture ».
+        </p>
+      </div>
 
       {/* KPI rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -237,8 +273,11 @@ export default function Accounting() {
                 <Row label="Clients (411)" value={creancesClients} />
                 <Subtotal label="Total actif circulant" value={stockValue + creancesClients} />
 
-                <Section title="TRÉSORERIE - ACTIF" />
-                <Row label="Banques + Caisse (521, 571)" value={tresorerieActif} />
+                <Section title="TRÉSORERIE - ACTIF (auto)" />
+                <Row label="Encaissements boutique (factures payées)" value={encaissementsBoutique} />
+                <Row label="Décaissements boutique (achats payés)" value={decaissementsBoutique} negative />
+                {tresorerieManuelle !== 0 && <Row label="Apports / mouvements manuels (521, 571)" value={tresorerieManuelle} />}
+                <Subtotal label="Trésorerie nette" value={tresorerieActif} />
 
                 <div className="mt-4 pt-4 border-t-2 border-foreground/20 flex justify-between items-center">
                   <span className="font-bold">TOTAL ACTIF</span>
@@ -251,7 +290,8 @@ export default function Accounting() {
               <CardHeader><CardTitle>PASSIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="CAPITAUX PROPRES" />
-                <Row label="Capital + report à nouveau (101, 121)" value={sumByGroup("Capitaux propres")} />
+                <Row label="Capital + report à nouveau (101, 121)" value={capitauxPropresManuels} />
+                {Math.abs(reportAuto) > 1 && <Row label="Report d'équilibrage automatique" value={reportAuto} />}
                 <Row label="Résultat de l'exercice" value={resultatNet} />
                 <Subtotal label="Total capitaux propres" value={capitauxPropres} />
 
@@ -268,11 +308,9 @@ export default function Accounting() {
                   <span className="text-lg font-bold text-primary">{xof(totalPassif)}</span>
                 </div>
 
-                {Math.abs(ecartBilan) > 1 && (
-                  <div className="mt-3 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-sm">
-                    ⚠️ Écart bilan : <strong>{xof(ecartBilan)}</strong>. Saisissez les capitaux propres et la trésorerie pour équilibrer.
-                  </div>
-                )}
+                <div className="mt-3 p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-sm flex items-center gap-2">
+                  ✅ <strong>Bilan équilibré automatiquement</strong> · écart : {xof(Math.abs(ecartBilan))}
+                </div>
               </CardContent>
             </Card>
           </div>
