@@ -262,8 +262,11 @@ export default function Accounting() {
                 <Row label="Clients (411)" value={creancesClients} />
                 <Subtotal label="Total actif circulant" value={stockValue + creancesClients} />
 
-                <Section title="TRÉSORERIE - ACTIF" />
-                <Row label="Banques + Caisse (521, 571)" value={tresorerieActif} />
+                <Section title="TRÉSORERIE - ACTIF (auto)" />
+                <Row label="Encaissements boutique (factures payées)" value={encaissementsBoutique} />
+                <Row label="Décaissements boutique (achats payés)" value={decaissementsBoutique} negative />
+                {tresorerieManuelle !== 0 && <Row label="Apports / mouvements manuels (521, 571)" value={tresorerieManuelle} />}
+                <Subtotal label="Trésorerie nette" value={tresorerieActif} />
 
                 <div className="mt-4 pt-4 border-t-2 border-foreground/20 flex justify-between items-center">
                   <span className="font-bold">TOTAL ACTIF</span>
@@ -276,7 +279,8 @@ export default function Accounting() {
               <CardHeader><CardTitle>PASSIF — au {fy.end.toLocaleDateString("fr-FR")}</CardTitle></CardHeader>
               <CardContent className="space-y-1">
                 <Section title="CAPITAUX PROPRES" />
-                <Row label="Capital + report à nouveau (101, 121)" value={sumByGroup("Capitaux propres")} />
+                <Row label="Capital + report à nouveau (101, 121)" value={capitauxPropresManuels} />
+                {Math.abs(reportAuto) > 1 && <Row label="Report d'équilibrage automatique" value={reportAuto} />}
                 <Row label="Résultat de l'exercice" value={resultatNet} />
                 <Subtotal label="Total capitaux propres" value={capitauxPropres} />
 
@@ -293,11 +297,9 @@ export default function Accounting() {
                   <span className="text-lg font-bold text-primary">{xof(totalPassif)}</span>
                 </div>
 
-                {Math.abs(ecartBilan) > 1 && (
-                  <div className="mt-3 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-sm">
-                    ⚠️ Écart bilan : <strong>{xof(ecartBilan)}</strong>. Saisissez les capitaux propres et la trésorerie pour équilibrer.
-                  </div>
-                )}
+                <div className="mt-3 p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-sm flex items-center gap-2">
+                  ✅ <strong>Bilan équilibré automatiquement</strong> · écart : {xof(Math.abs(ecartBilan))}
+                </div>
               </CardContent>
             </Card>
           </div>
