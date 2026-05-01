@@ -187,6 +187,17 @@ export default function Accounting() {
         }
       />
 
+      {/* Bannière pédagogique : tout est automatique */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+        <div className="font-semibold text-primary mb-1">📊 Comptabilité automatique</div>
+        <p className="text-muted-foreground leading-relaxed">
+          Tout ce qui se passe sur la boutique est déjà comptabilisé : ventes (701), achats (601), TVA, stock (311),
+          créances clients (411), dettes fournisseurs (401), trésorerie (521/571 selon le moyen de paiement).
+          Le bilan s'équilibre <strong>automatiquement</strong>. Vous n'avez qu'à saisir manuellement les charges externes
+          (loyer, salaires, électricité…) via « Nouvelle écriture ».
+        </p>
+      </div>
+
       {/* KPI rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPI label="Chiffre d'affaires" value={xof(produitsExpl)} accent="text-primary" />
