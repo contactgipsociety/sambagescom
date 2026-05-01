@@ -141,3 +141,112 @@ export const importProductsXlsx = async (
   }
   return result;
 };
+
+// ============== TIERS (Clients / Fournisseurs) ==============
+import type { Party, PartyType } from "./types";
+import { upsertParty } from "./store";
+
+export interface PartyImportRow {
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  ninea?: string;
+  notes?: string;
+}
+
+export interface PartyImportResult {
+  total: number;
+  created: number;
+  updated: number;
+  errors: { row: number; message: string }[];
+}
+
+const partyLabel = (t: PartyType) => (t === "client" ? "Clients" : "Fournisseurs");
+
+export const exportPartiesXlsx = (parties: Party[], type: PartyType) => {
+  const data = parties
+    .filter((p) => p.type === type)
+    .map((p) => ({
+      Nom: p.name,
+      Email: p.email ?? "",
+      Téléphone: p.phone ?? "",
+      Adresse: p.address ?? "",
+      NINEA: p.ninea ?? "",
+      Notes: p.notes ?? "",
+    }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [{ wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 32 }, { wch: 16 }, { wch: 32 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, partyLabel(type));
+  XLSX.writeFile(wb, `${type === "client" ? "clients" : "fournisseurs"}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
+
+export const downloadPartiesTemplateXlsx = (type: PartyType) => {
+  const sample = [{
+    Nom: type === "client" ? "Boutique Diallo" : "Grossiste Sénégal SARL",
+    Email: "contact@exemple.sn",
+    Téléphone: "+221 77 000 00 00",
+    Adresse: "Dakar, Sénégal",
+    NINEA: "0012345678",
+    Notes: "",
+  }];
+  const ws = XLSX.utils.json_to_sheet(sample);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, partyLabel(type));
+  XLSX.writeFile(wb, `modele-${type === "client" ? "clients" : "fournisseurs"}.xlsx`);
+};
+
+export const parsePartiesXlsx = async (file: File): Promise<PartyImportRow[]> => {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const json = XLSX.utils.sheet_to_json<any>(ws, { defval: "" });
+  return json.map((r) => {
+    const cName = findCol(r, "Nom", "Name", "Raison sociale", "Société", "Societe");
+    const cEmail = findCol(r, "Email", "E-mail", "Mail");
+    const cPhone = findCol(r, "Téléphone", "Telephone", "Tel", "Phone", "Mobile");
+    const cAddr = findCol(r, "Adresse", "Address");
+    const cNinea = findCol(r, "NINEA", "Ninea", "SIRET", "Siret");
+    const cNotes = findCol(r, "Notes", "Note", "Commentaire");
+    return {
+      name: cName ? String(r[cName] || "").trim() : "",
+      email: cEmail ? String(r[cEmail] || "").trim() || undefined : undefined,
+      phone: cPhone ? String(r[cPhone] || "").trim() || undefined : undefined,
+      address: cAddr ? String(r[cAddr] || "").trim() || undefined : undefined,
+      ninea: cNinea ? String(r[cNinea] || "").trim() || undefined : undefined,
+      notes: cNotes ? String(r[cNotes] || "").trim() || undefined : undefined,
+    } as PartyImportRow;
+  });
+};
+
+export const importPartiesXlsx = async (
+  rows: PartyImportRow[],
+  existing: Party[],
+  type: PartyType,
+): Promise<PartyImportResult> => {
+  const result: PartyImportResult = { total: rows.length, created: 0, updated: 0, errors: [] };
+  const sameType = existing.filter((p) => p.type === type);
+  const byName = new Map(sameType.map((p) => [p.name.toLowerCase(), p]));
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    try {
+      if (!r.name) { result.errors.push({ row: i + 2, message: "Nom vide" }); continue; }
+      const exist = byName.get(r.name.toLowerCase());
+      await upsertParty({
+        id: exist?.id,
+        type,
+        name: r.name,
+        email: r.email,
+        phone: r.phone,
+        address: r.address,
+        ninea: r.ninea,
+        notes: r.notes,
+      });
+      if (exist) result.updated++; else result.created++;
+    } catch (e: any) {
+      result.errors.push({ row: i + 2, message: e?.message ?? "Erreur" });
+    }
+  }
+  return result;
+};
