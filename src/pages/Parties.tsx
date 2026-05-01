@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useStore, upsertParty, deleteParty } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, Users, Building2, Mail, Phone } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Pencil, Trash2, Users, Building2, Mail, Phone, Upload, Download, FileSpreadsheet, BarChart3 } from "lucide-react";
 import { xof } from "@/lib/format";
 import type { Party, PartyType } from "@/lib/types";
 import { toast } from "sonner";
+import { exportPartiesXlsx, downloadPartiesTemplateXlsx, parsePartiesXlsx, importPartiesXlsx, type PartyImportRow, type PartyImportResult } from "@/lib/excel";
+import { Link } from "react-router-dom";
 
 interface Props { type: PartyType; }
 
