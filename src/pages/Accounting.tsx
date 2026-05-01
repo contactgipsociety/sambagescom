@@ -22,6 +22,7 @@ import { usePaymentMethods, getPaymentLabel } from "@/lib/payments";
 export default function Accounting() {
   const { entries, documents, products } = useStore();
   const company = useCompany();
+  const methods = usePaymentMethods();
   const startMonth = company.fiscalYearStartMonth;
   const startDay = company.fiscalYearStartDay;
   const [year, setYear] = useState<number>(company.currentFiscalYear);
