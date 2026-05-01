@@ -22,6 +22,10 @@ export default function PartiesPage({ type }: Props) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Party | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [previewRows, setPreviewRows] = useState<PartyImportRow[] | null>(null);
+  const [importResult, setImportResult] = useState<PartyImportResult | null>(null);
+  const [importing, setImporting] = useState(false);
 
   // Solde dû par tiers : factures (vente) ou achats avec statut "envoyee" (= non payés)
   const balanceOf = (partyId: string) => {
@@ -41,6 +45,32 @@ export default function PartiesPage({ type }: Props) {
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Party) => { setEditing(p); setOpen(true); };
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const rows = await parsePartiesXlsx(file);
+      setPreviewRows(rows);
+      setImportResult(null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Fichier illisible");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const confirmImport = async () => {
+    if (!previewRows) return;
+    setImporting(true);
+    try {
+      const res = await importPartiesXlsx(previewRows, s.parties, type);
+      setImportResult(res);
+      toast.success(`${res.created} créé(s), ${res.updated} mis à jour`);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,13 +99,30 @@ export default function PartiesPage({ type }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onPickFile} />
       <PageHeader
         title={title}
         subtitle={`${list.length} ${type}${list.length > 1 ? "s" : ""}${totalBalance > 0 ? ` · Solde dû total : ${xof(totalBalance)}` : ""}`}
         action={
-          <Button onClick={openNew} className="gap-2">
-            <Plus className="h-4 w-4" /> Nouveau {isClient ? "client" : "fournisseur"}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/comptes-tiers"><BarChart3 className="h-4 w-4" /> Analyse comptes</Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2"><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-2" /> Importer (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportPartiesXlsx(s.parties, type)}><Download className="h-4 w-4 mr-2" /> Exporter</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => downloadPartiesTemplateXlsx(type)}>Télécharger le modèle</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={openNew} className="gap-2">
+              <Plus className="h-4 w-4" /> Nouveau {isClient ? "client" : "fournisseur"}
+            </Button>
+          </div>
         }
       />
 
