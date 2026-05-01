@@ -63,15 +63,31 @@ export default function Accounting() {
   // Stock final estimé (au coût)
   const stockValue = products.reduce((s, p) => s + p.stock * p.costHT, 0);
 
-  // Créances clients (factures envoyées non payées)
+  // Créances clients (toutes factures envoyées non payées, tous exercices)
   const creancesClients = documents
     .filter((d) => d.kind === "facture" && d.status === "envoyee")
     .reduce((s, d) => s + docTotals(d).ttc, 0);
 
-  // Dettes fournisseurs (achats envoyés non payés)
+  // Dettes fournisseurs (tous exercices)
   const dettesFour = documents
     .filter((d) => d.kind === "achat" && d.status === "envoyee")
     .reduce((s, d) => s + docTotals(d).ttc, 0);
+
+  // ============= TRÉSORERIE AUTOMATIQUE =============
+  // Encaissements clients (factures payées non-crédit) - Décaissements achats payés non-crédit
+  // Exclut les paiements à crédit (compte client / crédit fournisseur)
+  const isCashLike = (paymentMethod?: string): boolean => {
+    if (!paymentMethod) return true; // par défaut espèces
+    const m = methods.find((x) => x.code === paymentMethod);
+    return !!m && !m.isCredit;
+  };
+  const encaissementsBoutique = documents
+    .filter((d) => d.kind === "facture" && d.status === "payee" && isCashLike(d.paymentMethod))
+    .reduce((s, d) => s + docTotals(d).ttc, 0);
+  const decaissementsBoutique = documents
+    .filter((d) => d.kind === "achat" && d.status === "payee" && isCashLike(d.paymentMethod))
+    .reduce((s, d) => s + docTotals(d).ttc, 0);
+  const tresorerieAuto = encaissementsBoutique - decaissementsBoutique;
 
   // ====== Agrégation des écritures manuelles ======
   const sumByType = (t: EntryType) => yearEntries.filter((e) => e.entryType === t).reduce((s, e) => s + e.amount, 0);
