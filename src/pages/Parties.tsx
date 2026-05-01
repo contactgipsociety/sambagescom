@@ -224,6 +224,61 @@ export default function PartiesPage({ type }: Props) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewRows} onOpenChange={(o) => { if (!o) { setPreviewRows(null); setImportResult(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Aperçu de l'import — {previewRows?.length ?? 0} ligne(s)</DialogTitle>
+          </DialogHeader>
+          {!importResult ? (
+            <>
+              <div className="max-h-80 overflow-auto border rounded-md">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted text-xs uppercase sticky top-0">
+                    <tr>
+                      <th className="text-left p-2">Nom</th>
+                      <th className="text-left p-2">Email</th>
+                      <th className="text-left p-2">Téléphone</th>
+                      <th className="text-left p-2">NINEA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(previewRows ?? []).slice(0, 50).map((r, i) => (
+                      <tr key={i} className="border-t">
+                        <td className="p-2">{r.name || <span className="text-destructive">vide</span>}</td>
+                        <td className="p-2 text-muted-foreground">{r.email}</td>
+                        <td className="p-2 text-muted-foreground">{r.phone}</td>
+                        <td className="p-2 text-muted-foreground">{r.ninea}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground">Les tiers existants (même nom) sont mis à jour automatiquement.</p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPreviewRows(null)}>Annuler</Button>
+                <Button onClick={confirmImport} disabled={importing}>{importing ? "Import…" : "Confirmer l'import"}</Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-md border p-3"><div className="text-2xl font-bold text-emerald-600">{importResult.created}</div><div className="text-xs text-muted-foreground">Créés</div></div>
+                <div className="rounded-md border p-3"><div className="text-2xl font-bold text-primary">{importResult.updated}</div><div className="text-xs text-muted-foreground">Mis à jour</div></div>
+                <div className="rounded-md border p-3"><div className="text-2xl font-bold text-destructive">{importResult.errors.length}</div><div className="text-xs text-muted-foreground">Erreurs</div></div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="max-h-40 overflow-auto border rounded-md p-2 text-xs space-y-1">
+                  {importResult.errors.map((e, i) => <div key={i}>Ligne {e.row} : {e.message}</div>)}
+                </div>
+              )}
+              <DialogFooter>
+                <Button onClick={() => { setPreviewRows(null); setImportResult(null); }}>Fermer</Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
