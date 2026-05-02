@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { useCompany } from "@/lib/company";
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +44,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
+  const company = useCompany();
   const isActive = (path: string) => path === "/" ? pathname === "/" : path === "/pos" ? pathname === "/pos" : pathname === path || pathname.startsWith(path + "/");
 
   const renderGroup = (label: string, items: typeof main) => (
@@ -73,10 +75,16 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-3">
-          <div className="h-9 w-9 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-sm">G</div>
+          {company.logoUrl ? (
+            <img src={company.logoUrl} alt={company.name} className="h-9 w-9 rounded-md object-contain bg-card shrink-0 shadow-sm" />
+          ) : (
+            <div className="h-9 w-9 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-sm">
+              {(company.name?.[0] || "G").toUpperCase()}
+            </div>
+          )}
           {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-foreground font-semibold text-[15px]">Gescom</span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-foreground font-semibold text-[15px] truncate">{company.name}</span>
               <span className="text-muted-foreground text-[11px]">Gestion commerciale · SN</span>
             </div>
           )}

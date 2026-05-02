@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import AuthPage from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import PartiesPage from "./pages/Parties";
 import PartiesAnalysis from "./pages/PartiesAnalysis";
@@ -25,7 +27,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route element={<AppLayout />}>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<PartiesPage type="client" />} />
             <Route path="/fournisseurs" element={<PartiesPage type="fournisseur" />} />
