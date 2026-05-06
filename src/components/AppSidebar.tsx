@@ -49,17 +49,18 @@ export function AppSidebar() {
 
   const renderGroup = (label: string, items: typeof main) => (
     <SidebarGroup>
-      {!collapsed && <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-semibold px-3">{label}</SidebarGroupLabel>}
+      {!collapsed && <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60 font-bold px-3 mt-1">{label}</SidebarGroupLabel>}
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
                 asChild
                 isActive={isActive(item.url)}
-                className="data-[active=true]:bg-primary-soft data-[active=true]:text-primary data-[active=true]:font-semibold data-[active=true]:border-l-2 data-[active=true]:border-primary rounded-md"
+                className="group relative h-10 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold rounded-lg hover:bg-sidebar-accent/60 transition-all"
               >
-                <NavLink to={item.url} className="flex items-center gap-3">
+                <NavLink to={item.url} className="flex items-center gap-3 px-3">
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary opacity-0 group-data-[active=true]:opacity-100 transition-opacity" />
                   <item.icon className="h-[18px] w-[18px] shrink-0" />
                   {!collapsed && <span className="text-[13.5px]">{item.title}</span>}
                 </NavLink>
@@ -76,16 +77,16 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-3">
           {company.logoUrl ? (
-            <img src={company.logoUrl} alt={company.name} className="h-9 w-9 rounded-md object-contain bg-card shrink-0 shadow-sm" />
+            <img src={company.logoUrl} alt={company.name} className="h-10 w-10 rounded-xl object-contain bg-card shrink-0 shadow-[var(--shadow-sm)] ring-1 ring-border/60" />
           ) : (
-            <div className="h-9 w-9 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-sm">
+            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-[var(--shadow-md)]">
               {(company.name?.[0] || "G").toUpperCase()}
             </div>
           )}
           {!collapsed && (
             <div className="flex flex-col leading-tight min-w-0">
-              <span className="text-foreground font-semibold text-[15px] truncate">{company.name}</span>
-              <span className="text-muted-foreground text-[11px]">Gestion commerciale · SN</span>
+              <span className="text-foreground font-bold text-[15px] truncate" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{company.name}</span>
+              <span className="text-muted-foreground text-[10.5px] uppercase tracking-wider font-medium">Gestion · SN</span>
             </div>
           )}
         </div>

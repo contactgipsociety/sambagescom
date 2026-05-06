@@ -45,17 +45,17 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto">
       <PageHeader title="Tableau de bord" subtitle="Vue d'ensemble de votre activité commerciale" />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="stat-card">
-            <div className="flex items-start justify-between">
+          <div key={stat.label} className="stat-card group">
+            <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</p>
-                <p className={`text-xl lg:text-2xl font-semibold mt-2 ${stat.accent} truncate`}>{stat.value}</p>
-                {stat.sub && <p className="text-xs text-muted-foreground mt-0.5">Marge : {stat.sub}</p>}
+                <p className="text-[10.5px] sm:text-xs text-muted-foreground font-semibold uppercase tracking-wider">{stat.label}</p>
+                <p className={`text-xl sm:text-2xl lg:text-[26px] font-bold mt-2 ${stat.accent} truncate tracking-tight`}>{stat.value}</p>
+                {stat.sub && <p className="text-xs text-muted-foreground mt-1">Marge : {stat.sub}</p>}
               </div>
-              <div className={`h-9 w-9 rounded-lg ${stat.soft} flex items-center justify-center shrink-0`}>
-                <stat.icon className={`h-4 w-4 ${stat.accent}`} />
+              <div className={`h-10 w-10 rounded-xl ${stat.soft} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                <stat.icon className={`h-[18px] w-[18px] ${stat.accent}`} />
               </div>
             </div>
           </div>

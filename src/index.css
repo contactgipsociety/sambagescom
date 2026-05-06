@@ -4,96 +4,113 @@
 
 @layer base {
   :root {
-    --background: 220 23% 97%;
-    --foreground: 222 25% 12%;
+    /* Soft neutral background, clean modern palette */
+    --background: 220 25% 98%;
+    --foreground: 222 30% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 25% 12%;
+    --card-foreground: 222 30% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 25% 12%;
+    --popover-foreground: 222 30% 11%;
 
-    /* Odoo signature aubergine */
-    --primary: 313 18% 37%;
+    /* Modern indigo / violet primary — vibrant but professional */
+    --primary: 245 70% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 313 25% 94%;
+    --primary-soft: 245 80% 96%;
+    --primary-glow: 260 80% 70%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 25% 12%;
+    --secondary: 220 16% 96%;
+    --secondary-foreground: 222 30% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    /* Teal Odoo */
-    --accent: 183 98% 26%;
+    /* Teal accent for secondary CTAs */
+    --accent: 188 85% 38%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 183 50% 94%;
+    --accent-soft: 188 60% 94%;
 
-    --success: 152 60% 36%;
+    --success: 152 65% 38%;
     --success-foreground: 0 0% 100%;
     --success-soft: 152 55% 94%;
 
-    --warning: 35 95% 50%;
+    --warning: 32 95% 52%;
     --warning-foreground: 0 0% 100%;
     --warning-soft: 35 95% 94%;
 
-    --destructive: 354 70% 50%;
+    --destructive: 354 75% 54%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 354 70% 96%;
+    --destructive-soft: 354 75% 96%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 313 18% 37%;
+    --border: 220 16% 91%;
+    --input: 220 16% 91%;
+    --ring: 245 70% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --shadow-sm: 0 1px 2px 0 hsl(222 25% 12% / 0.05);
-    --shadow-md: 0 4px 12px -2px hsl(222 25% 12% / 0.07), 0 2px 4px -2px hsl(222 25% 12% / 0.04);
-    --shadow-lg: 0 12px 32px -8px hsl(222 25% 12% / 0.12);
+    /* Gradients & shadows */
+    --gradient-primary: linear-gradient(135deg, hsl(245 70% 55%), hsl(265 75% 62%));
+    --gradient-accent: linear-gradient(135deg, hsl(188 85% 38%), hsl(200 90% 50%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 25% 98%));
+    --gradient-mesh:
+      radial-gradient(at 0% 0%, hsl(245 70% 55% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsl(188 85% 38% / 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(265 75% 62% / 0.05) 0px, transparent 50%);
 
-    /* Sidebar Odoo : claire avec accent aubergine */
+    --shadow-sm: 0 1px 2px 0 hsl(222 30% 11% / 0.04);
+    --shadow-md: 0 4px 16px -4px hsl(222 30% 11% / 0.08), 0 2px 4px -2px hsl(222 30% 11% / 0.04);
+    --shadow-lg: 0 16px 40px -12px hsl(222 30% 11% / 0.14);
+    --shadow-glow: 0 0 0 1px hsl(245 70% 55% / 0.1), 0 8px 24px -8px hsl(245 70% 55% / 0.35);
+
+    /* Sidebar — clean white with subtle indigo wash */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 20% 25%;
-    --sidebar-primary: 313 18% 37%;
+    --sidebar-foreground: 222 20% 28%;
+    --sidebar-primary: 245 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 313 25% 96%;
-    --sidebar-accent-foreground: 313 30% 30%;
-    --sidebar-border: 220 13% 92%;
-    --sidebar-ring: 313 18% 37%;
+    --sidebar-accent: 245 80% 97%;
+    --sidebar-accent-foreground: 245 60% 38%;
+    --sidebar-border: 220 16% 93%;
+    --sidebar-ring: 245 70% 55%;
   }
 
   .dark {
-    --background: 222 30% 8%;
+    --background: 222 32% 7%;
     --foreground: 210 40% 98%;
-    --card: 222 25% 11%;
+    --card: 222 28% 10%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 25% 11%;
+    --popover: 222 28% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 313 30% 65%;
+    --primary: 250 75% 68%;
     --primary-foreground: 222 47% 11%;
-    --primary-soft: 313 25% 18%;
-    --secondary: 222 20% 16%;
+    --primary-soft: 250 30% 18%;
+    --primary-glow: 270 75% 72%;
+    --secondary: 222 22% 15%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 20% 16%;
-    --muted-foreground: 220 9% 60%;
-    --accent: 183 60% 45%;
+    --muted: 222 22% 15%;
+    --muted-foreground: 220 10% 62%;
+    --accent: 188 70% 50%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 183 40% 18%;
-    --success: 152 55% 45%;
+    --accent-soft: 188 40% 18%;
+    --success: 152 60% 48%;
     --success-foreground: 0 0% 100%;
     --success-soft: 152 45% 15%;
-    --warning: 35 95% 55%;
+    --warning: 35 95% 58%;
     --warning-foreground: 0 0% 100%;
     --warning-soft: 35 50% 15%;
-    --destructive: 354 65% 55%;
+    --destructive: 354 70% 58%;
     --destructive-foreground: 0 0% 100%;
     --destructive-soft: 354 50% 18%;
-    --border: 222 20% 18%;
-    --input: 222 20% 18%;
-    --ring: 313 30% 65%;
-    --sidebar-background: 222 30% 9%;
+    --border: 222 22% 18%;
+    --input: 222 22% 18%;
+    --ring: 250 75% 68%;
+    --gradient-primary: linear-gradient(135deg, hsl(250 75% 60%), hsl(270 75% 65%));
+    --gradient-mesh:
+      radial-gradient(at 0% 0%, hsl(250 75% 60% / 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(188 70% 50% / 0.08) 0px, transparent 50%);
+    --sidebar-background: 222 30% 8%;
     --sidebar-foreground: 220 14% 80%;
-    --sidebar-primary: 313 30% 65%;
+    --sidebar-primary: 250 75% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 25% 14%;
     --sidebar-accent-foreground: 0 0% 100%;
@@ -105,20 +122,79 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv11", "ss01";
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
   }
-  h1, h2, h3, h4 {
+  h1, h2, h3, h4, h5 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     @apply tracking-tight;
+    letter-spacing: -0.015em;
   }
+  /* Smooth scroll & better mobile experience */
+  html, body {
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); background-clip: padding-box; border: 2px solid transparent; }
 }
 
 @layer components {
   .stat-card {
-    @apply bg-card border border-border rounded-lg p-4 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:border-primary/20 transition-all;
+    @apply relative bg-card border border-border/60 rounded-xl p-4 sm:p-5 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:border-primary/30 transition-all duration-300 overflow-hidden;
+  }
+  .stat-card::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 transition-opacity;
+  }
+  .stat-card:hover::before { @apply opacity-100; }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 rounded-xl shadow-[var(--shadow-md)];
+  }
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .mesh-bg {
+    background: hsl(var(--background));
+    background-image: var(--gradient-mesh);
   }
   .odoo-chip {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium;
+  }
+
+  /* Mobile-first table wrapper */
+  .table-wrap {
+    @apply w-full overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
   }
 }
