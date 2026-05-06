@@ -63,44 +63,48 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 sm:p-6">
-      <div className="w-full max-w-md flex flex-col items-center gap-6">
-        <div className="flex flex-col items-center gap-3 text-center">
+    <div className="min-h-screen flex items-center justify-center mesh-bg p-4 sm:p-6 safe-top safe-bottom relative overflow-hidden">
+      {/* Decorative blurred orbs */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+
+      <div className="relative w-full max-w-md flex flex-col items-center gap-7 animate-fade-in">
+        <div className="flex flex-col items-center gap-4 text-center">
           {company.logoUrl ? (
-            <img src={company.logoUrl} alt={company.name} className="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-xl shadow-lg bg-card p-2" />
+            <img src={company.logoUrl} alt={company.name} className="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-2xl shadow-[var(--shadow-lg)] bg-card p-2.5 ring-1 ring-border/60" />
           ) : (
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl gradient-primary flex items-center justify-center shadow-[var(--shadow-lg)]">
               <Store className="h-10 w-10 text-primary-foreground" />
             </div>
           )}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{company.name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Espace de gestion sécurisé</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">{company.name}</h1>
+            <p className="text-sm text-muted-foreground mt-1.5">Espace de gestion sécurisé</p>
           </div>
         </div>
 
-        <Card className="w-full shadow-xl border-border/60">
+        <Card className="w-full glass-card border-border/60 shadow-[var(--shadow-lg)]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Bienvenue</CardTitle>
+            <CardTitle className="text-xl">Bienvenue 👋</CardTitle>
             <CardDescription>Identifiez-vous pour accéder à la plateforme.</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="signin"><LogIn className="h-4 w-4 mr-1.5" />Connexion</TabsTrigger>
-                <TabsTrigger value="signup"><UserPlus className="h-4 w-4 mr-1.5" />Inscription</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-5 h-11 p-1 bg-muted/60">
+                <TabsTrigger value="signin" className="rounded-md data-[state=active]:shadow-[var(--shadow-sm)]"><LogIn className="h-4 w-4 mr-1.5" />Connexion</TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-md data-[state=active]:shadow-[var(--shadow-sm)]"><UserPlus className="h-4 w-4 mr-1.5" />Inscription</TabsTrigger>
               </TabsList>
 
-              <form onSubmit={submit} className="space-y-3">
+              <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.com" />
+                  <Label htmlFor="email" className="text-xs font-medium">Email</Label>
+                  <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.com" className="h-11" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Input id="password" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                  <Label htmlFor="password" className="text-xs font-medium">Mot de passe</Label>
+                  <Input id="password" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-11" />
                 </div>
-                <Button type="submit" className="w-full mt-2" disabled={submitting}>
+                <Button type="submit" className="w-full h-11 mt-2 gradient-primary border-0 shadow-[var(--shadow-glow)] font-semibold" disabled={submitting}>
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signin" ? "Se connecter" : "Créer un compte"}
                 </Button>
                 <TabsContent value="signup" className="m-0 pt-1">
@@ -113,7 +117,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        <p className="text-[11px] text-muted-foreground text-center">© {new Date().getFullYear()} {company.name}</p>
+        <p className="text-[11px] text-muted-foreground text-center">© {new Date().getFullYear()} {company.name} · Propulsé par Lovable Cloud</p>
       </div>
     </div>
   );
