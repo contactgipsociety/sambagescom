@@ -55,6 +55,7 @@ export default function POS() {
   const [cat, setCat] = useState("__all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [partyId, setPartyId] = useState<string>("__none");
+  const [quickClient, setQuickClient] = useState(false);
   const [paid, setPaid] = useState<number>(0);
   const [payMethod, setPayMethod] = useState<string>("especes");
 
