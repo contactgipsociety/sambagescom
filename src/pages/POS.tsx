@@ -73,6 +73,29 @@ export default function POS() {
   const [closeCounted, setCloseCounted] = useState<number>(0);
   const [closeNotes, setCloseNotes] = useState("");
 
+  // Pré-remplit le dialogue à chaque ouverture
+  useEffect(() => {
+    if (openDlg) {
+      if (!openName) setOpenName(autoSessionName);
+      if (!openCashier) setOpenCashier(autoCashier);
+      if (!openBalance) setOpenBalance(autoOpeningBalance);
+    }
+  }, [openDlg, autoSessionName, autoCashier, autoOpeningBalance]);
+
+  // Ouverture en un clic avec valeurs auto
+  const handleQuickOpen = async () => {
+    try {
+      await openSession({
+        name: autoSessionName,
+        cashier: autoCashier || undefined,
+        openingBalance: autoOpeningBalance,
+      });
+      toast.success(`Caisse ouverte — solde initial ${xof(autoOpeningBalance)}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erreur");
+    }
+  };
+
   const categories = useMemo(() => {
     const set = new Set<string>();
     s.products.forEach((p) => p.category && set.add(p.category));
