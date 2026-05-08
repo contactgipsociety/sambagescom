@@ -133,12 +133,15 @@ export const upsertParty = async (p: Omit<Party, "id" | "createdAt"> & { id?: st
     email: p.email || null, phone: p.phone || null,
     address: p.address || null, ninea: p.ninea || null, notes: p.notes || null,
   };
+  let id = p.id;
   if (p.id) {
     await supabase.from("parties").update(row).eq("id", p.id);
   } else {
-    await supabase.from("parties").insert(row);
+    const { data } = await supabase.from("parties").insert(row).select("id").single();
+    id = data?.id;
   }
   await fetchAll();
+  return id as string | undefined;
 };
 
 export const deleteParty = async (id: string) => {
