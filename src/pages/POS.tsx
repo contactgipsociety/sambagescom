@@ -474,6 +474,13 @@ export default function POS() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateParty
+        open={quickClient}
+        onOpenChange={setQuickClient}
+        type="client"
+        onCreated={(id) => setPartyId(id)}
+      />
     </div>
   );
 }
