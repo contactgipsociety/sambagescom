@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore, upsertDocument, nextDocNumber } from "@/lib/store";
-import { useCurrentSession, openSession, closeSession } from "@/lib/pos";
+import { useCurrentSession, openSession, closeSession, usePosSessions } from "@/lib/pos";
+import { useAuth } from "@/lib/auth";
 import { useActivePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
