@@ -133,12 +133,15 @@ export const upsertParty = async (p: Omit<Party, "id" | "createdAt"> & { id?: st
     email: p.email || null, phone: p.phone || null,
     address: p.address || null, ninea: p.ninea || null, notes: p.notes || null,
   };
+  let id = p.id;
   if (p.id) {
     await supabase.from("parties").update(row).eq("id", p.id);
   } else {
-    await supabase.from("parties").insert(row);
+    const { data } = await supabase.from("parties").insert(row).select("id").single();
+    id = data?.id;
   }
   await fetchAll();
+  return id as string | undefined;
 };
 
 export const deleteParty = async (id: string) => {
@@ -157,12 +160,15 @@ export const upsertProduct = async (p: Omit<Product, "id" | "createdAt"> & { id?
     tva_rate: p.tvaRate, stock: p.stock,
     stock_alert: p.stockAlert, unit: p.unit,
   };
+  let id = p.id;
   if (p.id) {
     await supabase.from("products").update(row).eq("id", p.id);
   } else {
-    await supabase.from("products").insert(row);
+    const { data } = await supabase.from("products").insert(row).select("id").single();
+    id = data?.id;
   }
   await fetchAll();
+  return id as string | undefined;
 };
 
 export const deleteProduct = async (id: string) => {

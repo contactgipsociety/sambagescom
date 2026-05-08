@@ -12,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText, UserPlus, PackagePlus } from "lucide-react";
 import { xof, dateFr, docTotals, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceDoc, InvoiceLine, DocKind, InvoiceStatus } from "@/lib/types";
+import { QuickCreateParty } from "@/components/QuickCreateParty";
+import { QuickCreateProduct } from "@/components/QuickCreateProduct";
 import { toast } from "sonner";
 
 interface Props { kind: DocKind; }
@@ -40,6 +42,8 @@ export default function DocumentsPage({ kind }: Props) {
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
+  const [quickParty, setQuickParty] = useState(false);
+  const [quickProductIdx, setQuickProductIdx] = useState<number | null>(null);
 
   const cfg = config[kind];
   const list = s.documents.filter((d) => d.kind === kind).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -195,12 +199,17 @@ export default function DocumentsPage({ kind }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-1">
                 <Label>{cfg.partyLabel} *</Label>
-                <Select value={partyId} onValueChange={setPartyId}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner…" /></SelectTrigger>
-                  <SelectContent>
-                    {parties.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-1">
+                  <Select value={partyId} onValueChange={setPartyId}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner…" /></SelectTrigger>
+                    <SelectContent>
+                      {parties.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setQuickParty(true)} title={`Créer ${cfg.party}`}>
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Date</Label>
@@ -258,6 +267,9 @@ export default function DocumentsPage({ kind }: Props) {
                                 {s.products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                               </SelectContent>
                             </Select>
+                            <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuickProductIdx(i)} title="Créer article">
+                              <PackagePlus className="h-4 w-4" />
+                            </Button>
                             <Input className="h-9" value={l.description} onChange={(e) => updateLine(i, { description: e.target.value })} placeholder="Description" />
                           </div>
                         </td>
@@ -300,6 +312,22 @@ export default function DocumentsPage({ kind }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateParty
+        open={quickParty}
+        onOpenChange={setQuickParty}
+        type={cfg.party}
+        onCreated={(id) => setPartyId(id)}
+      />
+
+      <QuickCreateProduct
+        open={quickProductIdx !== null}
+        onOpenChange={(o) => { if (!o) setQuickProductIdx(null); }}
+        onCreated={(id) => {
+          if (quickProductIdx !== null) onPickProduct(quickProductIdx, id);
+          setQuickProductIdx(null);
+        }}
+      />
     </div>
   );
 }
