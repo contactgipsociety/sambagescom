@@ -229,10 +229,14 @@ export default function POS() {
           </div>
           <div>
             <h3 className="text-lg font-semibold">Caisse fermée</h3>
-            <p className="text-sm text-muted-foreground mt-1">Ouvrez une session pour commencer à encaisser. Le solde d'ouverture sera la base pour calculer l'écart de caisse à la fermeture.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ouverture en un clic avec : caissier <strong>{autoCashier || "—"}</strong>, solde initial <strong>{xof(autoOpeningBalance)}</strong>
+              {autoOpeningBalance > 0 && " (report de la dernière clôture)"}.
+            </p>
           </div>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => setOpenDlg(true)} className="gap-2"><LockOpen className="h-4 w-4" /> Ouvrir une session</Button>
+          <div className="flex gap-2 justify-center flex-wrap">
+            <Button onClick={handleQuickOpen} className="gap-2"><LockOpen className="h-4 w-4" /> Ouvrir directement</Button>
+            <Button onClick={() => setOpenDlg(true)} variant="outline" className="gap-2">Modifier les infos…</Button>
             <Button asChild variant="outline" className="gap-2"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Voir l'analyse</Link></Button>
           </div>
         </div>
