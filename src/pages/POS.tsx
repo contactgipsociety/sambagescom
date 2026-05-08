@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X, ImageIcon,
-  CheckCircle2, LockOpen, Lock, Clock, Wallet, BarChart3,
+  CheckCircle2, LockOpen, Lock, Clock, Wallet, BarChart3, UserPlus,
 } from "lucide-react";
+import { QuickCreateParty } from "@/components/QuickCreateParty";
 import { xof, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceLine, InvoiceDoc } from "@/lib/types";
