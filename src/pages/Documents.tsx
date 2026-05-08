@@ -12,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Receipt, ShoppingCart, MoreHorizontal, Trash, Printer, ReceiptText, UserPlus, PackagePlus } from "lucide-react";
 import { xof, dateFr, docTotals, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceDoc, InvoiceLine, DocKind, InvoiceStatus } from "@/lib/types";
+import { QuickCreateParty } from "@/components/QuickCreateParty";
+import { QuickCreateProduct } from "@/components/QuickCreateProduct";
 import { toast } from "sonner";
 
 interface Props { kind: DocKind; }
