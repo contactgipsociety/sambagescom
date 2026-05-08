@@ -267,6 +267,9 @@ export default function DocumentsPage({ kind }: Props) {
                                 {s.products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                               </SelectContent>
                             </Select>
+                            <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuickProductIdx(i)} title="Créer article">
+                              <PackagePlus className="h-4 w-4" />
+                            </Button>
                             <Input className="h-9" value={l.description} onChange={(e) => updateLine(i, { description: e.target.value })} placeholder="Description" />
                           </div>
                         </td>
