@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Plus, Minus, Trash2, ShoppingBag, Printer, ReceiptText, X, ImageIcon,
-  CheckCircle2, LockOpen, Lock, Clock, Wallet, BarChart3,
+  CheckCircle2, LockOpen, Lock, Clock, Wallet, BarChart3, UserPlus,
 } from "lucide-react";
+import { QuickCreateParty } from "@/components/QuickCreateParty";
 import { xof, uid } from "@/lib/format";
 import { printInvoice, printTicket } from "@/lib/print";
 import type { InvoiceLine, InvoiceDoc } from "@/lib/types";
@@ -54,6 +55,7 @@ export default function POS() {
   const [cat, setCat] = useState("__all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [partyId, setPartyId] = useState<string>("__none");
+  const [quickClient, setQuickClient] = useState(false);
   const [paid, setPaid] = useState<number>(0);
   const [payMethod, setPayMethod] = useState<string>("especes");
 
@@ -386,13 +388,18 @@ export default function POS() {
 
           <div className="border-t border-border p-4 space-y-3 bg-muted/20">
             <div className="grid grid-cols-2 gap-2">
-              <Select value={partyId} onValueChange={setPartyId}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Client" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">Client comptoir</SelectItem>
-                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-1">
+                <Select value={partyId} onValueChange={setPartyId}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Client" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Client comptoir</SelectItem>
+                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => setQuickClient(true)} title="Nouveau client">
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
               <Select value={payMethod} onValueChange={setPayMethod}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -467,6 +474,13 @@ export default function POS() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateParty
+        open={quickClient}
+        onOpenChange={setQuickClient}
+        type="client"
+        onCreated={(id) => setPartyId(id)}
+      />
     </div>
   );
 }
