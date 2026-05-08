@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore, upsertDocument, nextDocNumber } from "@/lib/store";
-import { useCurrentSession, openSession, closeSession } from "@/lib/pos";
+import { useCurrentSession, openSession, closeSession, usePosSessions } from "@/lib/pos";
+import { useAuth } from "@/lib/auth";
 import { useActivePaymentMethods, getPaymentLabel } from "@/lib/payments";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,29 @@ interface CartItem extends InvoiceLine { stock: number; }
 export default function POS() {
   const s = useStore();
   const session = useCurrentSession();
+  const allSessions = usePosSessions();
+  const { user } = useAuth();
   const methods = useActivePaymentMethods();
+
+  // Valeurs auto pour l'ouverture de caisse
+  const autoCashier = useMemo(() => {
+    if (!user?.email) return "";
+    return user.email.split("@")[0];
+  }, [user]);
+
+  const autoSessionName = useMemo(() => {
+    const d = new Date();
+    const date = d.toLocaleDateString("fr-FR");
+    const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return `Caisse — ${date} ${time}`;
+  }, []);
+
+  const autoOpeningBalance = useMemo(() => {
+    const lastClosed = allSessions
+      .filter((x) => x.status === "closed" && x.closingBalanceCounted != null)
+      .sort((a, b) => (b.closedAt ?? "").localeCompare(a.closedAt ?? ""))[0];
+    return lastClosed?.closingBalanceCounted ?? 0;
+  }, [allSessions]);
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("__all");
@@ -49,6 +72,29 @@ export default function POS() {
   const [openBalance, setOpenBalance] = useState<number>(0);
   const [closeCounted, setCloseCounted] = useState<number>(0);
   const [closeNotes, setCloseNotes] = useState("");
+
+  // Pré-remplit le dialogue à chaque ouverture
+  useEffect(() => {
+    if (openDlg) {
+      if (!openName) setOpenName(autoSessionName);
+      if (!openCashier) setOpenCashier(autoCashier);
+      if (!openBalance) setOpenBalance(autoOpeningBalance);
+    }
+  }, [openDlg, autoSessionName, autoCashier, autoOpeningBalance]);
+
+  // Ouverture en un clic avec valeurs auto
+  const handleQuickOpen = async () => {
+    try {
+      await openSession({
+        name: autoSessionName,
+        cashier: autoCashier || undefined,
+        openingBalance: autoOpeningBalance,
+      });
+      toast.success(`Caisse ouverte — solde initial ${xof(autoOpeningBalance)}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erreur");
+    }
+  };
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -183,10 +229,14 @@ export default function POS() {
           </div>
           <div>
             <h3 className="text-lg font-semibold">Caisse fermée</h3>
-            <p className="text-sm text-muted-foreground mt-1">Ouvrez une session pour commencer à encaisser. Le solde d'ouverture sera la base pour calculer l'écart de caisse à la fermeture.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ouverture en un clic avec : caissier <strong>{autoCashier || "—"}</strong>, solde initial <strong>{xof(autoOpeningBalance)}</strong>
+              {autoOpeningBalance > 0 && " (report de la dernière clôture)"}.
+            </p>
           </div>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => setOpenDlg(true)} className="gap-2"><LockOpen className="h-4 w-4" /> Ouvrir une session</Button>
+          <div className="flex gap-2 justify-center flex-wrap">
+            <Button onClick={handleQuickOpen} className="gap-2"><LockOpen className="h-4 w-4" /> Ouvrir directement</Button>
+            <Button onClick={() => setOpenDlg(true)} variant="outline" className="gap-2">Modifier les infos…</Button>
             <Button asChild variant="outline" className="gap-2"><Link to="/pos/analyse"><BarChart3 className="h-4 w-4" /> Voir l'analyse</Link></Button>
           </div>
         </div>
