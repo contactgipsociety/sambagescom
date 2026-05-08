@@ -42,6 +42,8 @@ export default function DocumentsPage({ kind }: Props) {
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
+  const [quickParty, setQuickParty] = useState(false);
+  const [quickProductIdx, setQuickProductIdx] = useState<number | null>(null);
 
   const cfg = config[kind];
   const list = s.documents.filter((d) => d.kind === kind).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
