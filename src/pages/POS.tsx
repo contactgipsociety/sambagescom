@@ -26,7 +26,29 @@ interface CartItem extends InvoiceLine { stock: number; }
 export default function POS() {
   const s = useStore();
   const session = useCurrentSession();
+  const allSessions = usePosSessions();
+  const { user } = useAuth();
   const methods = useActivePaymentMethods();
+
+  // Valeurs auto pour l'ouverture de caisse
+  const autoCashier = useMemo(() => {
+    if (!user?.email) return "";
+    return user.email.split("@")[0];
+  }, [user]);
+
+  const autoSessionName = useMemo(() => {
+    const d = new Date();
+    const date = d.toLocaleDateString("fr-FR");
+    const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return `Caisse — ${date} ${time}`;
+  }, []);
+
+  const autoOpeningBalance = useMemo(() => {
+    const lastClosed = allSessions
+      .filter((x) => x.status === "closed" && x.closingBalanceCounted != null)
+      .sort((a, b) => (b.closedAt ?? "").localeCompare(a.closedAt ?? ""))[0];
+    return lastClosed?.closingBalanceCounted ?? 0;
+  }, [allSessions]);
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("__all");
