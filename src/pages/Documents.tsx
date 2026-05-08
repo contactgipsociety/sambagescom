@@ -312,6 +312,22 @@ export default function DocumentsPage({ kind }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <QuickCreateParty
+        open={quickParty}
+        onOpenChange={setQuickParty}
+        type={cfg.party}
+        onCreated={(id) => setPartyId(id)}
+      />
+
+      <QuickCreateProduct
+        open={quickProductIdx !== null}
+        onOpenChange={(o) => { if (!o) setQuickProductIdx(null); }}
+        onCreated={(id) => {
+          if (quickProductIdx !== null) onPickProduct(quickProductIdx, id);
+          setQuickProductIdx(null);
+        }}
+      />
     </div>
   );
 }
