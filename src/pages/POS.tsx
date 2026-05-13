@@ -172,8 +172,8 @@ export default function POS() {
   const handleOpenSession = async () => {
     if (!openName.trim()) return toast.error("Nom de session requis");
     try {
-      await openSession({ name: openName.trim(), cashier: openCashier.trim() || undefined, openingBalance: openBalance });
-      toast.success("Session de caisse ouverte");
+      await openSession({ name: openName.trim(), cashier: openCashier.trim() || undefined, openingBalance: openBalance, userId: user?.id });
+      toast.success("Session de caisse ouverte — pointage arrivée enregistré");
       setOpenDlg(false);
       setOpenName(""); setOpenCashier(""); setOpenBalance(0);
     } catch (e: any) {
