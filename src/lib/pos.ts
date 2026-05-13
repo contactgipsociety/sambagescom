@@ -35,6 +35,7 @@ const mapRow = (r: any): PosSession => ({
   id: r.id,
   name: r.name,
   cashier: r.cashier ?? undefined,
+  userId: r.user_id ?? undefined,
   status: r.status,
   openedAt: r.opened_at,
   closedAt: r.closed_at ?? undefined,
