@@ -91,8 +91,9 @@ export default function POS() {
         name: autoSessionName,
         cashier: autoCashier || undefined,
         openingBalance: autoOpeningBalance,
+        userId: user?.id,
       });
-      toast.success(`Caisse ouverte — solde initial ${xof(autoOpeningBalance)}`);
+      toast.success(`Caisse ouverte — pointage arrivée enregistré`);
     } catch (e: any) {
       toast.error(e.message ?? "Erreur");
     }
