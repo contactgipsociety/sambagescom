@@ -7,6 +7,7 @@ export interface PosSession {
   id: string;
   name: string;
   cashier?: string;
+  userId?: string;
   status: PosSessionStatus;
   openedAt: string;
   closedAt?: string;
