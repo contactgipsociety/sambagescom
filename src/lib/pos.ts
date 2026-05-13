@@ -7,6 +7,7 @@ export interface PosSession {
   id: string;
   name: string;
   cashier?: string;
+  userId?: string;
   status: PosSessionStatus;
   openedAt: string;
   closedAt?: string;
@@ -34,6 +35,7 @@ const mapRow = (r: any): PosSession => ({
   id: r.id,
   name: r.name,
   cashier: r.cashier ?? undefined,
+  userId: r.user_id ?? undefined,
   status: r.status,
   openedAt: r.opened_at,
   closedAt: r.closed_at ?? undefined,
@@ -79,12 +81,13 @@ export const useCurrentSession = (): PosSession | undefined => {
   return list.find((s) => s.status === "open");
 };
 
-export const openSession = async (params: { name: string; cashier?: string; openingBalance: number }) => {
+export const openSession = async (params: { name: string; cashier?: string; openingBalance: number; userId?: string }) => {
   const existing = memory.find((s) => s.status === "open");
   if (existing) throw new Error("Une session est déjà ouverte");
   await supabase.from("pos_sessions").insert({
     name: params.name,
     cashier: params.cashier || null,
+    user_id: params.userId || null,
     opening_balance: params.openingBalance,
     status: "open",
   });

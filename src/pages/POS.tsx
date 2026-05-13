@@ -91,8 +91,9 @@ export default function POS() {
         name: autoSessionName,
         cashier: autoCashier || undefined,
         openingBalance: autoOpeningBalance,
+        userId: user?.id,
       });
-      toast.success(`Caisse ouverte — solde initial ${xof(autoOpeningBalance)}`);
+      toast.success(`Caisse ouverte — pointage arrivée enregistré`);
     } catch (e: any) {
       toast.error(e.message ?? "Erreur");
     }
@@ -171,8 +172,8 @@ export default function POS() {
   const handleOpenSession = async () => {
     if (!openName.trim()) return toast.error("Nom de session requis");
     try {
-      await openSession({ name: openName.trim(), cashier: openCashier.trim() || undefined, openingBalance: openBalance });
-      toast.success("Session de caisse ouverte");
+      await openSession({ name: openName.trim(), cashier: openCashier.trim() || undefined, openingBalance: openBalance, userId: user?.id });
+      toast.success("Session de caisse ouverte — pointage arrivée enregistré");
       setOpenDlg(false);
       setOpenName(""); setOpenCashier(""); setOpenBalance(0);
     } catch (e: any) {

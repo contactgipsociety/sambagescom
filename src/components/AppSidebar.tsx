@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3, UserCog } from "lucide-react";
+import { useCurrentUser } from "@/lib/userRole";
 import { useCompany } from "@/lib/company";
 import {
   Sidebar,
@@ -36,7 +37,8 @@ const catalogue = [
 const finance = [
   { title: "Comptabilité", url: "/comptabilite", icon: BookOpen },
 ];
-const systeme = [
+const systemeAdmin = [
+  { title: "Utilisateurs", url: "/utilisateurs", icon: UserCog },
   { title: "Paramètres", url: "/parametres", icon: SettingsIcon },
 ];
 
@@ -45,6 +47,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
   const company = useCompany();
+  const { isAdmin } = useCurrentUser();
   const isActive = (path: string) => path === "/" ? pathname === "/" : path === "/pos" ? pathname === "/pos" : pathname === path || pathname.startsWith(path + "/");
 
   const renderGroup = (label: string, items: typeof main) => (
@@ -97,7 +100,7 @@ export function AppSidebar() {
         {renderGroup("Répertoire", repertoire)}
         {renderGroup("Stock", catalogue)}
         {renderGroup("Finance", finance)}
-        {renderGroup("Système", systeme)}
+        {isAdmin && renderGroup("Système", systemeAdmin)}
       </SidebarContent>
     </Sidebar>
   );

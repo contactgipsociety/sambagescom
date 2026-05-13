@@ -16,6 +16,7 @@ import POS from "./pages/POS";
 import POSAnalysis from "./pages/POSAnalysis";
 import Accounting from "./pages/Accounting";
 import Settings from "./pages/Settings";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,9 @@ const App = () => (
             <Route path="/pos" element={<POS />} />
             <Route path="/pos/analyse" element={<POSAnalysis />} />
             <Route path="/comptabilite" element={<Accounting />} />
+          </Route>
+          <Route element={<ProtectedRoute adminOnly><AppLayout /></ProtectedRoute>}>
+            <Route path="/utilisateurs" element={<Users />} />
             <Route path="/parametres" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
