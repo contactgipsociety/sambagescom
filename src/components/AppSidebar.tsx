@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Package, Building2, Receipt, ShoppingCart, FileText, Boxes, Tag, ScanLine, BookOpen, Settings as SettingsIcon, BarChart3, UserCog } from "lucide-react";
+import { useCurrentUser } from "@/lib/userRole";
 import { useCompany } from "@/lib/company";
 import {
   Sidebar,
