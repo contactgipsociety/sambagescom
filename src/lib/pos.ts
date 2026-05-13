@@ -81,12 +81,13 @@ export const useCurrentSession = (): PosSession | undefined => {
   return list.find((s) => s.status === "open");
 };
 
-export const openSession = async (params: { name: string; cashier?: string; openingBalance: number }) => {
+export const openSession = async (params: { name: string; cashier?: string; openingBalance: number; userId?: string }) => {
   const existing = memory.find((s) => s.status === "open");
   if (existing) throw new Error("Une session est déjà ouverte");
   await supabase.from("pos_sessions").insert({
     name: params.name,
     cashier: params.cashier || null,
+    user_id: params.userId || null,
     opening_balance: params.openingBalance,
     status: "open",
   });
