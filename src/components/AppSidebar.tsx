@@ -37,7 +37,8 @@ const catalogue = [
 const finance = [
   { title: "Comptabilité", url: "/comptabilite", icon: BookOpen },
 ];
-const systeme = [
+const systemeAdmin = [
+  { title: "Utilisateurs", url: "/utilisateurs", icon: UserCog },
   { title: "Paramètres", url: "/parametres", icon: SettingsIcon },
 ];
 
@@ -46,6 +47,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
   const company = useCompany();
+  const { isAdmin } = useCurrentUser();
   const isActive = (path: string) => path === "/" ? pathname === "/" : path === "/pos" ? pathname === "/pos" : pathname === path || pathname.startsWith(path + "/");
 
   const renderGroup = (label: string, items: typeof main) => (
