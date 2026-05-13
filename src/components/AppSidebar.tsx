@@ -100,7 +100,7 @@ export function AppSidebar() {
         {renderGroup("Répertoire", repertoire)}
         {renderGroup("Stock", catalogue)}
         {renderGroup("Finance", finance)}
-        {renderGroup("Système", systeme)}
+        {isAdmin && renderGroup("Système", systemeAdmin)}
       </SidebarContent>
     </Sidebar>
   );
