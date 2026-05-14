@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Loader2, LogOut, User as UserIcon } from "lucide-react";
 import { useCompany } from "@/lib/company";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const titles: Record<string, string> = {
   "/": "Tableau de bord",
@@ -44,6 +45,7 @@ export default function AppLayout() {
               <span className={`h-1.5 w-1.5 rounded-full ${ready ? "bg-success animate-pulse" : "bg-warning"}`} />
               {ready ? "Cloud · FCFA" : "Synchronisation…"}
             </div>
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 px-1.5 sm:px-2 gap-2 rounded-full hover:bg-muted">
