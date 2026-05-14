@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Loader2, LogOut, User as UserIcon } from "lucide-react";
 import { useCompany } from "@/lib/company";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const titles: Record<string, string> = {
   "/": "Tableau de bord",
