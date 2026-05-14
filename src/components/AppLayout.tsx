@@ -45,6 +45,7 @@ export default function AppLayout() {
               <span className={`h-1.5 w-1.5 rounded-full ${ready ? "bg-success animate-pulse" : "bg-warning"}`} />
               {ready ? "Cloud · FCFA" : "Synchronisation…"}
             </div>
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 px-1.5 sm:px-2 gap-2 rounded-full hover:bg-muted">
