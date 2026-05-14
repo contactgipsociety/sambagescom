@@ -24,7 +24,7 @@ export interface CompanySettings {
 
 const DEFAULTS: CompanySettings = {
   id: "",
-  name: "Mon Entreprise",
+  name: "Sama Boutique",
   currency: "XOF",
   defaultTva: 18,
   fiscalYearStartMonth: 1,
@@ -34,7 +34,7 @@ const DEFAULTS: CompanySettings = {
 
 const mapRow = (r: any): CompanySettings => ({
   id: r.id,
-  name: r.name ?? "Mon Entreprise",
+  name: r.name ?? "Sama Boutique",
   legalForm: r.legal_form ?? undefined,
   address: r.address ?? undefined,
   city: r.city ?? undefined,
