@@ -49,8 +49,8 @@ export const useCurrentUser = (): CurrentUserState => {
     if (authLoading) return;
     load();
     if (!user) return;
-    const channel = supabase
-      .channel(`user-${user.id}`)
+    const channel = supabase.channel(`user-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
