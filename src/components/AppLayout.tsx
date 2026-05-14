@@ -21,7 +21,7 @@ const titles: Record<string, string> = {
 
 export default function AppLayout() {
   const { pathname } = useLocation();
-  const title = titles[pathname] ?? "Gescom";
+  const title = titles[pathname] ?? "Sama Boutique";
   const ready = useStoreLoaded();
   const { user } = useAuth();
   const company = useCompany();
